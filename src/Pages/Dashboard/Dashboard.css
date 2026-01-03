@@ -1,0 +1,33 @@
+/* ======================================================
+   DASHBOARD.CSS — Vision Secure (Professional Edition)
+   ====================================================== */
+
+/* Minimal, professional transitions */
+.table-row-transition {
+  transition: background-color 0.15s ease;
+}
+
+/* Clean scrollbar */
+.dashboard-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dashboard-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dashboard-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.dashboard-container::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .stat-card {
+    font-size: 0.9rem;
+  }
+}

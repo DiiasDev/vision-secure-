@@ -1,0 +1,134 @@
+/* ======================================================
+   THEME.CSS — Vision Secure
+   ====================================================== */
+
+/* ---------- LIGHT MODE ---------- */
+:root {
+  /* Brand */
+  --color-primary: #2563eb;      /* Blue 600 */
+  --color-primary-hover: #1d4ed8;
+  --color-primary-light: #dbeafe;
+  --color-primary-dark: #1e40af;
+  
+  /* Accent Colors */
+  --color-accent: #8b5cf6;       /* Purple 500 */
+  --color-accent-light: #ede9fe;
+  --color-accent-dark: #6d28d9;
+
+  /* Backgrounds */
+  --bg-app: #f8fafc;             /* Slate 50 */
+  --bg-card: #ffffff;
+  --bg-sidebar: #ffffff;
+  --bg-sidebar-hover: #f8fafc;
+  --bg-table-header: #f1f5f9;    /* Slate 100 */
+  --bg-table-row: #ffffff;
+  --bg-table-row-hover: #f8fafc;
+
+  /* Borders */
+  --border-default: #e2e8f0;     /* Slate 200 */
+  --border-strong: #cbd5e1;      /* Slate 300 */
+  --border-light: #f1f5f9;       /* Slate 100 */
+
+  /* Text */
+  --text-primary: #0f172a;       /* Slate 900 */
+  --text-secondary: #475569;     /* Slate 600 */
+  --text-muted: #64748b;         /* Slate 500 */
+  --text-inverse: #ffffff;
+
+  /* Status */
+  --color-success: #16a34a;      /* Green 600 */
+  --color-success-bg: #dcfce7;
+
+  --color-warning: #d97706;      /* Amber 600 */
+  --color-warning-bg: #fef3c7;
+
+  --color-danger: #dc2626;       /* Red 600 */
+  --color-danger-bg: #fee2e2;
+
+  --color-info: #0284c7;         /* Sky 600 */
+  --color-info-bg: #e0f2fe;
+
+  /* Inputs */
+  --input-bg: #ffffff;
+  --input-border: #cbd5e1;
+  --input-border-focus: #2563eb;
+  --input-text: #0f172a;
+  --input-placeholder: #94a3b8;
+
+  /* Buttons */
+  --button-secondary-bg: #f1f5f9;
+  --button-secondary-hover: #e2e8f0;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+  
+  /* Sidebar */
+  --sidebar-width: 280px;
+  --sidebar-collapsed-width: 80px;
+  --sidebar-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ---------- DARK MODE ---------- */
+[data-theme="dark"] {
+  /* Brand */
+  --color-primary: #3b82f6;      /* Blue 500 */
+  --color-primary-hover: #2563eb;
+  --color-primary-light: #1e3a8a;
+  --color-primary-dark: #1e40af;
+  
+  /* Accent Colors */
+  --color-accent: #a78bfa;       /* Purple 400 */
+  --color-accent-light: #2e1065;
+  --color-accent-dark: #7c3aed;
+
+  /* Backgrounds */
+  --bg-app: #020617;             /* Slate 950 */
+  --bg-card: #0f172a;            /* Slate 900 */
+  --bg-sidebar: #0f172a;
+  --bg-sidebar-hover: #1e293b;
+  --bg-table-header: #1e293b;
+  --bg-table-row: #0f172a;
+  --bg-table-row-hover: #1e293b;
+
+  /* Borders */
+  --border-default: #1e293b;     /* Slate 800 */
+  --border-strong: #334155;      /* Slate 700 */
+  --border-light: #1e293b;
+
+  /* Text */
+  --text-primary: #f8fafc;       /* Slate 50 */
+  --text-secondary: #cbd5e1;     /* Slate 300 */
+  --text-muted: #94a3b8;         /* Slate 400 */
+  --text-inverse: #020617;
+
+  /* Status */
+  --color-success: #22c55e;      /* Green 500 */
+  --color-success-bg: rgba(34, 197, 94, 0.15);
+
+  --color-warning: #f59e0b;      /* Amber 500 */
+  --color-warning-bg: rgba(245, 158, 11, 0.15);
+
+  --color-danger: #ef4444;       /* Red 500 */
+  --color-danger-bg: rgba(239, 68, 68, 0.15);
+
+  --color-info: #38bdf8;         /* Sky 400 */
+  --color-info-bg: rgba(56, 189, 248, 0.15);
+
+  /* Inputs */
+  --input-bg: #1e293b;
+  --input-border: #334155;
+  --input-border-focus: #3b82f6;
+  --input-text: #f8fafc;
+  --input-placeholder: #64748b;
+
+  /* Buttons */
+  --button-secondary-bg: #1e293b;
+  --button-secondary-hover: #334155;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5);
+}

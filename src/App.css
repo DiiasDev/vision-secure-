@@ -1,0 +1,32 @@
+/* Esconder scrollbar no sidebar quando colapsado */
+.sidebar-nav-collapsed {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE e Edge */
+}
+
+.sidebar-nav-collapsed::-webkit-scrollbar {
+  display: none; /* Chrome, Safari e Opera */
+}
+
+/* Scrollbar customizada para o sidebar expandido */
+.sidebar-nav-expanded {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-default) transparent;
+}
+
+.sidebar-nav-expanded::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-nav-expanded::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-nav-expanded::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: 2px;
+}
+
+.sidebar-nav-expanded::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
