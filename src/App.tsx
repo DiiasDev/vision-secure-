@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
 import "./App.css";
 import "./Styles/theme.css";
 import Header from "./Components/Header/Header";
 import { Sidebar } from "./Components/Sidebar/Sidebar";
 import Dashboard from "./Pages/Dashboard/Dashboard";
+import Segurados from "./Pages/Segurados/Segurados";
 
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -49,7 +51,15 @@ function App() {
           notificationsCount={3}
         />
         <main className="flex-1 overflow-auto bg-[var(--bg-app)]">
-          <Dashboard />
+          <Routes>
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/segurados" element={<Segurados />} />
+            <Route path="/seguradoras" element={<div className="p-6"><h1>Seguradoras - Em desenvolvimento</h1></div>} />
+            <Route path="/veiculos" element={<div className="p-6"><h1>Veículos - Em desenvolvimento</h1></div>} />
+            <Route path="/corretores" element={<div className="p-6"><h1>Corretores - Em desenvolvimento</h1></div>} />
+            <Route path="/seguros" element={<div className="p-6"><h1>Seguros - Em desenvolvimento</h1></div>} />
+          </Routes>
         </main>
       </div>
     </div>
