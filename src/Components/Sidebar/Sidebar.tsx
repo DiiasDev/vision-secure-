@@ -98,36 +98,51 @@ export function Sidebar() {
         <SidebarItem
           icon={Users}
           label="Segurados"
-          to="/segurados"
           isCollapsed={isCollapsed}
+          subTabs={[
+            { label: "Criar Segurado", to: "/segurados/criar", type: "create" },
+            { label: "Listar Segurados", to: "/segurados/listar", type: "list" }
+          ]}
         />
 
         <SidebarItem
           icon={Shield}
           label="Seguradoras"
-          to="/seguradoras"
           isCollapsed={isCollapsed}
+          subTabs={[
+            { label: "Criar Seguradora", to: "/seguradoras/criar", type: "create" },
+            { label: "Listar Seguradoras", to: "/seguradoras/listar", type: "list" }
+          ]}
         />
 
         <SidebarItem
           icon={Car}
           label="Veículos"
-          to="/veiculos"
           isCollapsed={isCollapsed}
+          subTabs={[
+            { label: "Criar Veículo", to: "/veiculos/criar", type: "create" },
+            { label: "Listar Veículos", to: "/veiculos/listar", type: "list" }
+          ]}
         />
 
         <SidebarItem
           icon={UserCog}
           label="Corretores"
-          to="/corretores"
           isCollapsed={isCollapsed}
+          subTabs={[
+            { label: "Criar Corretor", to: "/corretores/criar", type: "create" },
+            { label: "Listar Corretores", to: "/corretores/listar", type: "list" }
+          ]}
         />
 
         <SidebarItem
           icon={FileText}
           label="Seguros"
-          to="/seguros"
           isCollapsed={isCollapsed}
+          subTabs={[
+            { label: "Criar Seguro", to: "/seguros/criar", type: "create" },
+            { label: "Listar Seguros", to: "/seguros/listar", type: "list" }
+          ]}
         />
       </nav>
 

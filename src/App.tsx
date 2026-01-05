@@ -54,11 +54,31 @@ function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/segurados" element={<Segurados />} />
-            <Route path="/seguradoras" element={<div className="p-6"><h1>Seguradoras - Em desenvolvimento</h1></div>} />
-            <Route path="/veiculos" element={<div className="p-6"><h1>Veículos - Em desenvolvimento</h1></div>} />
-            <Route path="/corretores" element={<div className="p-6"><h1>Corretores - Em desenvolvimento</h1></div>} />
-            <Route path="/seguros" element={<div className="p-6"><h1>Seguros - Em desenvolvimento</h1></div>} />
+            
+            {/* Segurados */}
+            <Route path="/segurados" element={<Navigate to="/segurados/listar" replace />} />
+            <Route path="/segurados/criar" element={<Segurados />} />
+            <Route path="/segurados/listar" element={<div className="p-6"><h1 className="text-2xl font-bold text-[var(--text-primary)]">Listar Segurados - Em desenvolvimento</h1></div>} />
+            
+            {/* Seguradoras */}
+            <Route path="/seguradoras" element={<Navigate to="/seguradoras/listar" replace />} />
+            <Route path="/seguradoras/criar" element={<div className="p-6"><h1 className="text-2xl font-bold text-[var(--text-primary)]">Criar Seguradora - Em desenvolvimento</h1></div>} />
+            <Route path="/seguradoras/listar" element={<div className="p-6"><h1 className="text-2xl font-bold text-[var(--text-primary)]">Listar Seguradoras - Em desenvolvimento</h1></div>} />
+            
+            {/* Veículos */}
+            <Route path="/veiculos" element={<Navigate to="/veiculos/listar" replace />} />
+            <Route path="/veiculos/criar" element={<div className="p-6"><h1 className="text-2xl font-bold text-[var(--text-primary)]">Criar Veículo - Em desenvolvimento</h1></div>} />
+            <Route path="/veiculos/listar" element={<div className="p-6"><h1 className="text-2xl font-bold text-[var(--text-primary)]">Listar Veículos - Em desenvolvimento</h1></div>} />
+            
+            {/* Corretores */}
+            <Route path="/corretores" element={<Navigate to="/corretores/listar" replace />} />
+            <Route path="/corretores/criar" element={<div className="p-6"><h1 className="text-2xl font-bold text-[var(--text-primary)]">Criar Corretor - Em desenvolvimento</h1></div>} />
+            <Route path="/corretores/listar" element={<div className="p-6"><h1 className="text-2xl font-bold text-[var(--text-primary)]">Listar Corretores - Em desenvolvimento</h1></div>} />
+            
+            {/* Seguros */}
+            <Route path="/seguros" element={<Navigate to="/seguros/listar" replace />} />
+            <Route path="/seguros/criar" element={<div className="p-6"><h1 className="text-2xl font-bold text-[var(--text-primary)]">Criar Seguro - Em desenvolvimento</h1></div>} />
+            <Route path="/seguros/listar" element={<div className="p-6"><h1 className="text-2xl font-bold text-[var(--text-primary)]">Listar Seguros - Em desenvolvimento</h1></div>} />
           </Routes>
         </main>
       </div>
