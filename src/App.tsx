@@ -6,6 +6,10 @@ import Header from "./Components/Header/Header";
 import { Sidebar } from "./Components/Sidebar/Sidebar";
 import Dashboard from "./Pages/Dashboard/Dashboard";
 import Segurados from "./Pages/Segurados/Segurados";
+import Seguradoras from "./Pages/Seguradoras/Seguradoras";
+import Corretores from "./Pages/Corretores/Corretores";
+import Veiculos from "./Pages/Veiculos/Veiculos";
+import Seguros from "./Pages/Seguros/Seguros";
 
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -62,22 +66,22 @@ function App() {
             
             {/* Seguradoras */}
             <Route path="/seguradoras" element={<Navigate to="/seguradoras/listar" replace />} />
-            <Route path="/seguradoras/criar" element={<div className="p-6"><h1 className="text-2xl font-bold text-[var(--text-primary)]">Criar Seguradora - Em desenvolvimento</h1></div>} />
+            <Route path="/seguradoras/criar" element={<Seguradoras />} />
             <Route path="/seguradoras/listar" element={<div className="p-6"><h1 className="text-2xl font-bold text-[var(--text-primary)]">Listar Seguradoras - Em desenvolvimento</h1></div>} />
             
             {/* Veículos */}
             <Route path="/veiculos" element={<Navigate to="/veiculos/listar" replace />} />
-            <Route path="/veiculos/criar" element={<div className="p-6"><h1 className="text-2xl font-bold text-[var(--text-primary)]">Criar Veículo - Em desenvolvimento</h1></div>} />
+            <Route path="/veiculos/criar" element={<Veiculos />} />
             <Route path="/veiculos/listar" element={<div className="p-6"><h1 className="text-2xl font-bold text-[var(--text-primary)]">Listar Veículos - Em desenvolvimento</h1></div>} />
             
             {/* Corretores */}
             <Route path="/corretores" element={<Navigate to="/corretores/listar" replace />} />
-            <Route path="/corretores/criar" element={<div className="p-6"><h1 className="text-2xl font-bold text-[var(--text-primary)]">Criar Corretor - Em desenvolvimento</h1></div>} />
+            <Route path="/corretores/criar" element={<Corretores />} />
             <Route path="/corretores/listar" element={<div className="p-6"><h1 className="text-2xl font-bold text-[var(--text-primary)]">Listar Corretores - Em desenvolvimento</h1></div>} />
             
             {/* Seguros */}
             <Route path="/seguros" element={<Navigate to="/seguros/listar" replace />} />
-            <Route path="/seguros/criar" element={<div className="p-6"><h1 className="text-2xl font-bold text-[var(--text-primary)]">Criar Seguro - Em desenvolvimento</h1></div>} />
+            <Route path="/seguros/criar" element={<Seguros />} />
             <Route path="/seguros/listar" element={<div className="p-6"><h1 className="text-2xl font-bold text-[var(--text-primary)]">Listar Seguros - Em desenvolvimento</h1></div>} />
           </Routes>
         </main>
