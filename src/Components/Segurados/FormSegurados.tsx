@@ -9,11 +9,11 @@ export default function FormSegurados() {
     try {
       await criarSegurado(data);
       alert("Segurado Criado Com Sucesso");
-      return true; // Indica sucesso
+      return true; 
     } catch (error: any) {
       console.error("Erro ao criar Segurado:", error);
       alert("Erro ao criar segurado. Tente novamente.");
-      throw error; // Propaga o erro para não limpar o formulário
+      throw error;
     }
   };
 
