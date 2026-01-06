@@ -1,182 +1,132 @@
-interface FormField {
-    name: string;
+type Field = {
+    fieldname: string;
     label: string;
-    type: 'text' | 'email' | 'password' | 'number' | 'tel' | 'textarea' | 'url' | 'select' | 'file' | 'date';
-    placeholder?: string;
+    fieldtype: string;
     required?: boolean;
+    options?: string[] | string;
+    section?: string;
+    placeholder?: string;
     defaultValue?: string;
-    options?: { value: string; label: string }[];
     fullWidth?: boolean;
-    accept?: string;
-    isAsync?: boolean; // Para indicar que as opções virão do backend
-}
+    isAsync?: boolean;
+};
 
-interface FormSection {
-    title: string;
-    fields: FormField[];
-}
-
-export const secoesSeguros: FormSection[] = [
+export const camposSeguros: Field[] = [
+    // Dados do Seguro
     {
-        title: 'Dados do Seguro',
-        fields: [
-            {
-                name: 'tipoSeguro',
-                label: 'Tipo de Seguro',
-                type: 'select',
-                required: true,
-                fullWidth: false,
-                options: [
-                    { value: 'Auto', label: 'Auto' },
-                    { value: 'Residencial', label: 'Residencial' },
-                    { value: 'Empresarial', label: 'Empresarial' },
-                    { value: 'Vida', label: 'Vida' },
-                    { value: 'Viagem', label: 'Viagem' },
-                    { value: 'Outros', label: 'Outros' }
-                ]
-            },
-            {
-                name: 'numeroApolice',
-                label: 'Número da Apólice',
-                type: 'text',
-                placeholder: 'Digite o número da apólice',
-                required: true,
-                fullWidth: false
-            },
-            {
-                name: 'statusSegurado',
-                label: 'Status do Seguro',
-                type: 'select',
-                required: true,
-                defaultValue: 'Ativo',
-                fullWidth: false,
-                options: [
-                    { value: 'Ativo', label: 'Ativo' },
-                    { value: 'Inativo', label: 'Inativo' },
-                    { value: 'Cancelado', label: 'Cancelado' },
-                    { value: 'Suspenso', label: 'Suspenso' },
-                    { value: 'Vencido', label: 'Vencido' }
-                ]
-            }
-        ]
+        fieldname: 'tipo_seguro',
+        label: 'Tipo de Seguro',
+        fieldtype: 'Select',
+        required: true,
+        options: ['Auto', 'Residencial', 'Empresarial', 'Vida', 'Viagem', 'Outros'],
+        section: 'Dados do Seguro'
     },
     {
-        title: 'Partes Envolvidas',
-        fields: [
-            {
-                name: 'segurado',
-                label: 'Segurado',
-                type: 'select',
-                required: true,
-                fullWidth: false,
-                isAsync: true,
-                options: [
-                    // Opções virão do backend
-                ]
-            },
-            {
-                name: 'seguradora',
-                label: 'Seguradora',
-                type: 'select',
-                required: true,
-                fullWidth: false,
-                isAsync: true,
-                options: [
-                    // Opções virão do backend
-                ]
-            },
-            {
-                name: 'corretorResponsavel',
-                label: 'Corretor Responsável',
-                type: 'select',
-                required: true,
-                fullWidth: false,
-                isAsync: true,
-                options: [
-                    // Opções virão do backend
-                ]
-            },
-            {
-                name: 'veiculo',
-                label: 'Veículo',
-                type: 'select',
-                required: false,
-                fullWidth: false,
-                isAsync: true,
-                options: [
-                    // Opções virão do backend
-                ]
-            }
-        ]
+        fieldname: 'numero_apolice',
+        label: 'Número da Apólice',
+        fieldtype: 'text',
+        placeholder: 'Digite o número da apólice',
+        required: true,
+        section: 'Dados do Seguro'
     },
     {
-        title: 'Vigência',
-        fields: [
-            {
-                name: 'inicioVigencia',
-                label: 'Início da Vigência',
-                type: 'date',
-                placeholder: 'DD/MM/AAAA',
-                required: true,
-                fullWidth: false
-            },
-            {
-                name: 'fimVigencia',
-                label: 'Fim da Vigência',
-                type: 'date',
-                placeholder: 'DD/MM/AAAA',
-                required: true,
-                fullWidth: false
-            }
-        ]
+        fieldname: 'status_segurado',
+        label: 'Status do Seguro',
+        fieldtype: 'Select',
+        required: true,
+        defaultValue: 'Ativo',
+        options: ['Ativo', 'Inativo', 'Cancelado', 'Suspenso', 'Vencido'],
+        section: 'Dados do Seguro'
+    },
+    
+    // Partes Envolvidas
+    {
+        fieldname: 'segurado',
+        label: 'Segurado',
+        fieldtype: 'Select',
+        required: true,
+        isAsync: true,
+        options: [],
+        section: 'Partes Envolvidas'
     },
     {
-        title: 'Valores',
-        fields: [
-            {
-                name: 'valorPremio',
-                label: 'Valor do Prêmio',
-                type: 'number',
-                placeholder: '0.00',
-                required: true,
-                fullWidth: false
-            },
-            {
-                name: 'valorFranquia',
-                label: 'Valor da Franquia',
-                type: 'number',
-                placeholder: '0.00',
-                required: true,
-                fullWidth: false
-            },
-            {
-                name: 'formaPagamento',
-                label: 'Forma de Pagamento',
-                type: 'select',
-                required: true,
-                fullWidth: false,
-                options: [
-                    { value: 'À Vista', label: 'À Vista' },
-                    { value: 'Mensal', label: 'Mensal' },
-                    { value: 'Trimestral', label: 'Trimestral' },
-                    { value: 'Semestral', label: 'Semestral' },
-                    { value: 'Anual', label: 'Anual' }
-                ]
-            },
-            {
-                name: 'situacaoPagamento',
-                label: 'Situação do Pagamento',
-                type: 'select',
-                required: true,
-                defaultValue: 'Pendente',
-                fullWidth: false,
-                options: [
-                    { value: 'Pendente', label: 'Pendente' },
-                    { value: 'Pago', label: 'Pago' },
-                    { value: 'Atrasado', label: 'Atrasado' },
-                    { value: 'Cancelado', label: 'Cancelado' }
-                ]
-            }
-        ]
+        fieldname: 'seguradora',
+        label: 'Seguradora',
+        fieldtype: 'Select',
+        required: true,
+        isAsync: true,
+        options: [],
+        section: 'Partes Envolvidas'
+    },
+    {
+        fieldname: 'corretor_responsavel',
+        label: 'Corretor Responsável',
+        fieldtype: 'Select',
+        required: true,
+        isAsync: true,
+        options: [],
+        section: 'Partes Envolvidas'
+    },
+    {
+        fieldname: 'veiculo',
+        label: 'Veículo',
+        fieldtype: 'Select',
+        required: false,
+        isAsync: true,
+        options: [],
+        section: 'Partes Envolvidas'
+    },
+    
+    // Vigência
+    {
+        fieldname: 'inicio_vigencia',
+        label: 'Início da Vigência',
+        fieldtype: 'Date',
+        placeholder: 'DD/MM/AAAA',
+        required: true,
+        section: 'Vigência'
+    },
+    {
+        fieldname: 'fim_vigencia',
+        label: 'Fim da Vigência',
+        fieldtype: 'Date',
+        placeholder: 'DD/MM/AAAA',
+        required: true,
+        section: 'Vigência'
+    },
+    
+    // Valores
+    {
+        fieldname: 'valor_premio',
+        label: 'Valor do Prêmio',
+        fieldtype: 'Float',
+        placeholder: '0.00',
+        required: true,
+        section: 'Valores'
+    },
+    {
+        fieldname: 'valor_franquia',
+        label: 'Valor da Franquia',
+        fieldtype: 'Float',
+        placeholder: '0.00',
+        required: true,
+        section: 'Valores'
+    },
+    {
+        fieldname: 'forma_pagamento',
+        label: 'Forma de Pagamento',
+        fieldtype: 'Select',
+        required: true,
+        options: ['À Vista', 'Mensal', 'Trimestral', 'Semestral', 'Anual'],
+        section: 'Valores'
+    },
+    {
+        fieldname: 'situacao_pagamento',
+        label: 'Situação do Pagamento',
+        fieldtype: 'Select',
+        required: true,
+        defaultValue: 'Pendente',
+        options: ['Pendente', 'Pago', 'Atrasado', 'Cancelado'],
+        section: 'Valores'
     }
 ];

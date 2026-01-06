@@ -1,4 +1,4 @@
-import FormCorretores from '../../Components/Corretores/FomCorretores';
+import FormCorretores from '../../Components/Corretores/FormCorretores';
 
 export default function Corretores() {
     return (
