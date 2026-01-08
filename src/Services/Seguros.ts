@@ -9,3 +9,5 @@ export async function newSeguro(dados: seguro) {
     console.error("Erro ao cadastrar novo Seguro", error);
   }
 }
+
+// TODO Fazer função de Get para seguros
