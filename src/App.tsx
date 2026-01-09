@@ -76,8 +76,8 @@ function App() {
             
             {/* Corretores */}
             <Route path="/corretores" element={<Navigate to="/corretores/listar" replace />} />
-            <Route path="/corretores/criar" element={<Corretores />} />
-            <Route path="/corretores/listar" element={<div className="p-6"><h1 className="text-2xl font-bold text-[var(--text-primary)]">Listar Corretores - Em desenvolvimento</h1></div>} />
+            <Route path="/corretores/criar" element={<Corretores initialTab={1} />} />
+            <Route path="/corretores/listar" element={<Corretores initialTab={0} />} />
             
             {/* Seguros */}
             <Route path="/seguros" element={<Navigate to="/seguros/listar" replace />} />
