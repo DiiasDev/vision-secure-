@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Tabs, Tab, Box } from '@mui/material';
 import { PersonAdd as PersonAddIcon, List as ListIcon } from '@mui/icons-material';
 import FormSegurados from '../../Components/Segurados/FormSegurados';
-import ListarSegurados from '../../Components/Seguros/ListaSegurados';
+import ListarSegurados from '../../Components/Segurados/ListaSegurados';
 
 interface SeguradosProps {
     initialTab?: number;

@@ -15,9 +15,9 @@ import {
 } from '@mui/icons-material';
 import { getSegurados } from '../../Services/Segurados';
 import type { segurado } from '../../Types/segurados.types';
-import { SeguradoCard } from '../Segurados/SeguradoCard';
-import { SeguradosTable } from '../Segurados/SeguradosTable';
-import { SeguradosFilter } from '../Segurados/SeguradosFilter';
+import { SeguradoCard } from './SeguradoCard';
+import { SeguradosTable } from './SeguradosTable';
+import { SeguradosFilter } from './SeguradosFilter';
 
 export default function ListarSegurados() {
   const [segurados, setSegurados] = useState<segurado[]>([]);

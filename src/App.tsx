@@ -81,8 +81,8 @@ function App() {
             
             {/* Seguros */}
             <Route path="/seguros" element={<Navigate to="/seguros/listar" replace />} />
-            <Route path="/seguros/criar" element={<Seguros />} />
-            <Route path="/seguros/listar" element={<div className="p-6"><h1 className="text-2xl font-bold text-[var(--text-primary)]">Listar Seguros - Em desenvolvimento</h1></div>} />
+            <Route path="/seguros/criar" element={<Seguros initialTab={1} />} />
+            <Route path="/seguros/listar" element={<Seguros initialTab={0} />} />
           </Routes>
         </main>
       </div>

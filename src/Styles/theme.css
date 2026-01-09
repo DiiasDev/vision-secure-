@@ -91,6 +91,7 @@
   --bg-table-header: #1e293b;
   --bg-table-row: #0f172a;
   --bg-table-row-hover: #1e293b;
+  --bg-secondary: #1e293b;       /* Slate 800 */
 
   /* Borders */
   --border-default: #1e293b;     /* Slate 800 */
