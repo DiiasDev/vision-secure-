@@ -10,3 +10,18 @@ export async function newSeguradora(dados: seguradora) {
     throw error;
   }
 }
+
+export async function getSeguradoras(): Promise<seguradora[]> {
+  try {
+    const response = await frappe.get("/resource/Seguradoras", {
+      params: {
+        fields: JSON.stringify("*"),
+        limit_page_lenght: 0,
+      },
+    });
+    return response.data?.data || [];
+  } catch (error: any) {
+    console.error("Erro ao listar Seguradoras", error);
+    throw error;
+  }
+}

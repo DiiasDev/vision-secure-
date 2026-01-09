@@ -13,52 +13,52 @@ import {
   ViewList as ViewListIcon,
   Refresh as RefreshIcon,
 } from '@mui/icons-material';
-import { getSegurados } from '../../Services/Segurados';
-import type { segurado } from '../../Types/segurados.types';
-import { SeguradoCard } from '../Segurados/SeguradoCard';
-import { SeguradosTable } from '../Segurados/SeguradosTable';
-import { SeguradosFilter } from '../Segurados/SeguradosFilter';
+import { getSeguradoras } from '../../Services/Seguradoras';
+import type { seguradora } from '../../Types/seguradoras.types';
+import { SeguradoraCard } from './SeguradoraCard';
+import { SeguradorasTable } from './SeguradorasTable';
+import { SeguradorasFilter } from './SeguradorasFilter';
 
-export default function ListarSegurados() {
-  const [segurados, setSegurados] = useState<segurado[]>([]);
-  const [filteredSegurados, setFilteredSegurados] = useState<segurado[]>([]);
+export default function ListaSeguradoras() {
+  const [seguradoras, setSeguradoras] = useState<seguradora[]>([]);
+  const [filteredSeguradoras, setFilteredSeguradoras] = useState<seguradora[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
   const [page, setPage] = useState(1);
   const itemsPerPage = 9;
 
-  const loadSegurados = async () => {
+  const loadSeguradoras = async () => {
     try {
       setLoading(true);
       setError(null);
-      const segurados = await getSegurados();
-      console.log("segurados: ", segurados)
-      setSegurados(segurados);
-      setFilteredSegurados(segurados);
+      const seguradoras = await getSeguradoras();
+      console.log('seguradoras: ', seguradoras);
+      setSeguradoras(seguradoras);
+      setFilteredSeguradoras(seguradoras);
     } catch (err: any) {
-      console.error('Erro ao carregar segurados:', err);
-      setError('Não foi possível carregar os segurados. Tente novamente.');
-      setSegurados([]);
-      setFilteredSegurados([]);
+      console.error('Erro ao carregar seguradoras:', err);
+      setError('Não foi possível carregar as seguradoras. Tente novamente.');
+      setSeguradoras([]);
+      setFilteredSeguradoras([]);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadSegurados();
+    loadSeguradoras();
   }, []);
 
   // Filter logic
   useEffect(() => {
-    let filtered = segurados;
+    let filtered = seguradoras;
 
-    // Filter by type
-    if (filterType !== 'all') {
-      filtered = filtered.filter((s) => s.tipo_pessoa === filterType);
+    // Filter by status
+    if (filterStatus !== 'all') {
+      filtered = filtered.filter((s) => s.status === filterStatus);
     }
 
     // Filter by search term
@@ -66,21 +66,21 @@ export default function ListarSegurados() {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(
         (s) =>
-          s.nome_completo.toLowerCase().includes(term) ||
-          s.cpf.toLowerCase().includes(term) ||
-          s.telefone.toLowerCase().includes(term) ||
+          s.nome_seguradora.toLowerCase().includes(term) ||
+          s.codigo_interno?.toLowerCase().includes(term) ||
+          s.telefone?.toLowerCase().includes(term) ||
           s.email?.toLowerCase().includes(term) ||
-          s.whatsapp?.toLowerCase().includes(term)
+          s.site?.toLowerCase().includes(term)
       );
     }
 
-    setFilteredSegurados(filtered);
+    setFilteredSeguradoras(filtered);
     setPage(1); // Reset to first page when filters change
-  }, [searchTerm, filterType, segurados]);
+  }, [searchTerm, filterStatus, seguradoras]);
 
   // Pagination
-  const totalPages = Math.ceil(filteredSegurados.length / itemsPerPage);
-  const paginatedSegurados = filteredSegurados.slice(
+  const totalPages = Math.ceil(filteredSeguradoras.length / itemsPerPage);
+  const paginatedSeguradoras = filteredSeguradoras.slice(
     (page - 1) * itemsPerPage,
     page * itemsPerPage
   );
@@ -97,10 +97,10 @@ export default function ListarSegurados() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div>
             <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
-              Segurados
+              Seguradoras
             </h1>
             <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-              Gerencie todos os segurados cadastrados no sistema
+              Gerencie todas as seguradoras cadastradas no sistema
             </p>
           </div>
 
@@ -137,7 +137,7 @@ export default function ListarSegurados() {
             <Button
               variant="outlined"
               startIcon={<RefreshIcon />}
-              onClick={loadSegurados}
+              onClick={loadSeguradoras}
               disabled={loading}
               sx={{
                 borderColor: 'var(--border-default)',
@@ -163,10 +163,10 @@ export default function ListarSegurados() {
             }}
           >
             <p className="text-sm font-medium mb-1" style={{ color: 'var(--text-muted)' }}>
-              Total de Segurados
+              Total de Seguradoras
             </p>
             <p className="text-2xl font-bold" style={{ color: 'var(--color-primary)' }}>
-              {segurados.length}
+              {seguradoras.length}
             </p>
           </div>
           <div
@@ -177,10 +177,10 @@ export default function ListarSegurados() {
             }}
           >
             <p className="text-sm font-medium mb-1" style={{ color: 'var(--text-muted)' }}>
-              Pessoas Físicas
+              Ativas
             </p>
-            <p className="text-2xl font-bold" style={{ color: 'var(--color-primary)' }}>
-              {segurados.filter((s) => s.tipo_pessoa === 'Física').length}
+            <p className="text-2xl font-bold" style={{ color: 'var(--color-success)' }}>
+              {seguradoras.filter((s) => s.status === 'Ativa').length}
             </p>
           </div>
           <div
@@ -191,20 +191,20 @@ export default function ListarSegurados() {
             }}
           >
             <p className="text-sm font-medium mb-1" style={{ color: 'var(--text-muted)' }}>
-              Pessoas Jurídicas
+              Inativas
             </p>
-            <p className="text-2xl font-bold" style={{ color: 'var(--color-primary)' }}>
-              {segurados.filter((s) => s.tipo_pessoa === 'Jurídica').length}
+            <p className="text-2xl font-bold" style={{ color: 'var(--color-error)' }}>
+              {seguradoras.filter((s) => s.status === 'Inativa').length}
             </p>
           </div>
         </div>
 
         {/* Filters */}
-        <SeguradosFilter
+        <SeguradorasFilter
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
-          filterType={filterType}
-          onFilterTypeChange={setFilterType}
+          filterStatus={filterStatus}
+          onFilterStatusChange={setFilterStatus}
         />
       </div>
 
@@ -217,7 +217,7 @@ export default function ListarSegurados() {
         <Alert
           severity="error"
           action={
-            <Button color="inherit" size="small" onClick={loadSegurados}>
+            <Button color="inherit" size="small" onClick={loadSeguradoras}>
               Tentar Novamente
             </Button>
           }
@@ -225,25 +225,25 @@ export default function ListarSegurados() {
         >
           {error}
         </Alert>
-      ) : filteredSegurados.length === 0 ? (
+      ) : filteredSeguradoras.length === 0 ? (
         <Alert severity="info" sx={{ mb: 4 }}>
-          {segurados.length === 0
-            ? 'Nenhum segurado cadastrado no sistema.'
-            : 'Nenhum segurado encontrado com os filtros aplicados.'}
+          {seguradoras.length === 0
+            ? 'Nenhuma seguradora cadastrada no sistema.'
+            : 'Nenhuma seguradora encontrada com os filtros aplicados.'}
         </Alert>
       ) : (
         <>
           {/* Grid View */}
           {viewMode === 'grid' && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {paginatedSegurados.map((segurado) => (
-                <SeguradoCard key={segurado.name} segurado={segurado} />
+              {paginatedSeguradoras.map((seguradora) => (
+                <SeguradoraCard key={seguradora.name} seguradora={seguradora} />
               ))}
             </div>
           )}
 
           {/* Table View */}
-          {viewMode === 'table' && <SeguradosTable segurados={paginatedSegurados} />}
+          {viewMode === 'table' && <SeguradorasTable seguradoras={paginatedSeguradoras} />}
 
           {/* Pagination */}
           {totalPages > 1 && (
