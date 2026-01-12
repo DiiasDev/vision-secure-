@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { newSeguro, atualizarSeguro } from "../../Services/Seguros";
 import { getSegurados } from "../../Services/Segurados";
 import { getSeguradoras } from "../../Services/Seguradoras";
-import { getCorretor } from "../../Services/corretores";
+import { getCorretor, getAllCorretoresForAuth } from "../../Services/corretores";
 import { getVehicle } from "../../Services/veiculos";
 import FormComponent from "../FormComponent/FormComponent";
 import { camposSeguros } from "./FieldsSeguros";
 import { CircularProgress, Box } from "@mui/material";
 import type { seguro } from "../../Types/seguros.types";
+import { isAdmin, getCorretorId, getLoggedUser } from "../../Utils/permissions";
 
 interface FormSegurosProps {
   initialData?: seguro | null;
@@ -17,17 +18,31 @@ interface FormSegurosProps {
 export default function FormSeguros({ initialData, onSuccess }: FormSegurosProps) {
   const [campos, setCampos] = useState(camposSeguros);
   const [loading, setLoading] = useState(true);
+  const [formInitialData, setFormInitialData] = useState<any>(undefined);
   const isEditMode = !!initialData;
+  const isAdminUser = isAdmin();
+  const corretorLogadoId = getCorretorId();
+  const nomeUsuarioLogado = getLoggedUser();
 
   useEffect(() => {
     const carregarDados = async () => {
       try {
-        const [segurados, seguradoras, corretores, veiculos] = await Promise.all([
+        console.log("🔍 Verificando permissões:");
+        console.log("  - isAdminUser:", isAdminUser);
+        console.log("  - corretorLogadoId:", corretorLogadoId);
+        console.log("  - nomeUsuarioLogado:", nomeUsuarioLogado);
+        
+        // Buscar todos os corretores SEM filtro para preencher o select
+        const [segurados, seguradoras, todosCorretores, veiculos] = await Promise.all([
           getSegurados(),
           getSeguradoras(),
-          getCorretor(),
+          getAllCorretoresForAuth(), // Busca TODOS os corretores sem filtro
           getVehicle(),
         ]);
+
+        console.log("📋 Corretores carregados:", todosCorretores);
+
+        let corretorDefaultValue = "";
 
         const camposAtualizados = camposSeguros.map((campo) => {
           if (campo.fieldname === "segurado") {
@@ -43,9 +58,32 @@ export default function FormSeguros({ initialData, onSuccess }: FormSegurosProps
             };
           }
           if (campo.fieldname === "corretor_responsavel") {
+            console.log("🎯 Processando campo corretor_responsavel");
+            
+            // Se for corretor (não admin), definir o valor padrão e desabilitar
+            if (!isAdminUser && corretorLogadoId) {
+              console.log("  - Corretor logado, buscando na lista...");
+              const corretorLogado = todosCorretores.find(c => c.name === corretorLogadoId);
+              console.log("  - Corretor encontrado:", corretorLogado);
+              
+              const valorCorretor = corretorLogado ? `${corretorLogado.name}|${corretorLogado.nome_completo}` : "";
+              console.log("  - Valor do corretor:", valorCorretor);
+              
+              corretorDefaultValue = valorCorretor;
+              
+              return {
+                ...campo,
+                options: corretorLogado ? [valorCorretor] : [], // Apenas o corretor logado
+                defaultValue: valorCorretor,
+                disabled: true, // Campo desabilitado para corretores
+              };
+            }
+            
+            console.log("  - Admin, mostrando todos os corretores");
+            // Admin pode escolher qualquer corretor
             return {
               ...campo,
-              options: corretores.map((c) => `${c.name}|${c.nome_completo}`),
+              options: todosCorretores.map((c) => `${c.name}|${c.nome_completo}`),
             };
           }
           if (campo.fieldname === "veiculo") {
@@ -58,6 +96,19 @@ export default function FormSeguros({ initialData, onSuccess }: FormSegurosProps
         });
 
         setCampos(camposAtualizados);
+        
+        console.log("💾 Valor padrão do corretor:", corretorDefaultValue);
+        
+        // Definir dados iniciais do formulário
+        if (!isEditMode && corretorDefaultValue) {
+          console.log("✅ Aplicando valor padrão do corretor");
+          setFormInitialData({ corretor_responsavel: corretorDefaultValue });
+        } else if (initialData) {
+          console.log("✅ Aplicando dados de edição");
+          setFormInitialData(initialData);
+        } else {
+          console.log("⚠️ Nenhum dado inicial aplicado");
+        }
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
         alert("Erro ao carregar dados do formulário");
@@ -121,7 +172,7 @@ export default function FormSeguros({ initialData, onSuccess }: FormSegurosProps
       subtitulo={isEditMode ? "Atualize os dados do seguro" : "Preencha os dados do seguro para cadastro no sistema"}
       onSubmit={handleSubmit}
       submitButtonText={isEditMode ? "Atualizar Seguro" : "Cadastrar Seguro"}
-      initialData={initialData || undefined}
+      initialData={formInitialData}
     />
   );
 }

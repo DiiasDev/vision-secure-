@@ -66,7 +66,7 @@ export const camposSeguros: Field[] = [
     },
     {
         fieldname: 'veiculo',
-        label: 'Veículo',
+        label: 'Veículo (Opcional)',
         fieldtype: 'Select',
         required: false,
         options: [],
@@ -121,8 +121,8 @@ export const camposSeguros: Field[] = [
         label: 'Situação do Pagamento',
         fieldtype: 'Select',
         required: true,
-        defaultValue: 'Pendente',
-        options: ['Pendente', 'Pago', 'Atrasado', 'Cancelado'],
+        defaultValue: 'Em Dia',
+        options: ['Em Dia', 'Pendente', 'Atrasado', 'Cancelado'],
         section: 'Valores'
     }
 ];

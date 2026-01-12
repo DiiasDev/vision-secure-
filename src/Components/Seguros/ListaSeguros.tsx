@@ -13,6 +13,8 @@ import { getSeguros } from '../../Services/Seguros';
 import type { seguro } from '../../Types/seguros.types';
 import { SegurosTable } from './SegurosTable';
 import { SegurosFilter } from './SegurosFilter';
+import { adicionarAssociacoesEmLote } from '../../Utils/corretorMapping';
+import { getCorretorId } from '../../Services/auth';
 
 interface ListaSegurosProps {
   onEdit?: (seguro: seguro) => void;
@@ -28,6 +30,29 @@ export default function ListaSeguros({ onEdit }: ListaSegurosProps = {}) {
   const [tipoFilter, setTipoFilter] = useState('all');
   const [page, setPage] = useState(1);
   const itemsPerPage = 10;
+
+  // Migração automática de registros antigos (executado uma vez)
+  useEffect(() => {
+    const corretorId = getCorretorId();
+    if (corretorId) {
+      const migrationKey = `seguros_migrated_${corretorId}`;
+      const jaMigrado = localStorage.getItem(migrationKey);
+      
+      if (!jaMigrado) {
+        console.log('🔄 Migrando seguros antigos para', corretorId);
+        
+        // Associar seguros existentes ao corretor atual
+        // Ajuste os IDs conforme os seguros que existem no seu banco
+        adicionarAssociacoesEmLote('seguro', [
+          // Adicione aqui os IDs dos seguros existentes
+          // { registroId: 'SEG-00001', corretorId },
+        ]);
+        
+        localStorage.setItem(migrationKey, 'true');
+        console.log('✅ Migração de seguros concluída');
+      }
+    }
+  }, []);
 
   const loadSeguros = async () => {
     try {

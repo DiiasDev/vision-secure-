@@ -18,6 +18,8 @@ import type { segurado } from '../../Types/segurados.types';
 import { SeguradoCard } from './SeguradoCard';
 import { SeguradosTable } from './SeguradosTable';
 import { SeguradosFilter } from './SeguradosFilter';
+import { adicionarAssociacoesEmLote } from '../../Utils/corretorMapping';
+import { getCorretorId } from '../../Services/auth';
 
 interface ListarSeguradosProps {
   onEdit?: (segurado: segurado) => void;
@@ -33,6 +35,29 @@ export default function ListarSegurados({ onEdit }: ListarSeguradosProps) {
   const [filterType, setFilterType] = useState('all');
   const [page, setPage] = useState(1);
   const itemsPerPage = 9;
+
+  // Migração automática de registros antigos (executado uma vez)
+  useEffect(() => {
+    const corretorId = getCorretorId();
+    if (corretorId) {
+      const migrationKey = `segurados_migrated_${corretorId}`;
+      const jaMigrado = localStorage.getItem(migrationKey);
+      
+      if (!jaMigrado) {
+        console.log('🔄 Migrando registros antigos para', corretorId);
+        
+        // Associar todos os segurados existentes ao corretor atual
+        adicionarAssociacoesEmLote('segurado', [
+          { registroId: 'SEGU-00001', corretorId },
+          { registroId: 'SEGU-00002', corretorId },
+        ]);
+        
+        // Marcar como migrado para não repetir
+        localStorage.setItem(migrationKey, 'true');
+        console.log('✅ Migração concluída');
+      }
+    }
+  }, []);
 
   const loadSegurados = async () => {
     try {

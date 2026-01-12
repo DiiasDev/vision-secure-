@@ -29,6 +29,7 @@ type Field = {
   placeholder?: string;
   defaultValue?: string;
   fullWidth?: boolean;
+  disabled?: boolean;
 };
 
 type FormComponentProps = {
@@ -258,13 +259,17 @@ const FormComponent: React.FC<FormComponentProps> = ({
         // Função para renderizar o valor selecionado
         const renderValue = (selected: string) => {
           if (!selected) return <span style={{ color: isDarkMode ? "#94a3b8" : "#6b7280", fontStyle: "italic" }}>Selecione...</span>;
-          const parts = selected.split("|");
-          return parts.length > 1 ? parts[1] : selected;
+          // Garantir que selected é uma string antes de fazer split
+          const selectedStr = typeof selected === 'string' ? selected : String(selected);
+          const parts = selectedStr.split("|");
+          return parts.length > 1 ? parts[1] : selectedStr;
         };
 
         // Função para renderizar o label da opção
         const renderOptionLabel = (opt: string) => {
-          const parts = opt.split("|");
+          // Garantir que opt é uma string antes de fazer split
+          const optStr = typeof opt === 'string' ? opt : String(opt);
+          const parts = optStr.split("|");
           if (parts.length > 1) {
             return (
               <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
@@ -285,7 +290,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
               </div>
             );
           }
-          return opt;
+          return optStr;
         };
 
         return (
@@ -295,12 +300,17 @@ const FormComponent: React.FC<FormComponentProps> = ({
               onChange={(e) => handleChange(field.fieldname, e.target.value)}
               displayEmpty
               required={field.required}
+              disabled={field.disabled}
               renderValue={renderValue}
               sx={{
                 color: isDarkMode ? "#f8fafc !important" : "#1f2937 !important",
                 "& .MuiSelect-select": {
                   color: isDarkMode ? "#f8fafc !important" : "#1f2937 !important",
                 },
+                ...(field.disabled && {
+                  backgroundColor: isDarkMode ? "rgba(100, 116, 139, 0.15)" : "rgba(156, 163, 175, 0.1)",
+                  cursor: "not-allowed",
+                }),
               }}
               MenuProps={{
                 PaperProps: {

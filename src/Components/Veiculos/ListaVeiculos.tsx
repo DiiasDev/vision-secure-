@@ -18,6 +18,8 @@ import type { veiculo } from '../../Types/veiculos.types';
 import { VeiculoCard } from './VeiculoCard';
 import { VeiculosTable } from './VeiculosTable';
 import { VeiculosFilter } from './VeiculosFilter';
+import { adicionarAssociacoesEmLote } from '../../Utils/corretorMapping';
+import { getCorretorId } from '../../Services/auth';
 
 interface ListaVeiculosProps {
   onEdit?: (veiculo: veiculo) => void;
@@ -34,6 +36,33 @@ export default function ListaVeiculos({ onEdit }: ListaVeiculosProps = {}) {
   const [filterUso, setFilterUso] = useState('all');
   const [page, setPage] = useState(1);
   const itemsPerPage = 9;
+
+  // Migração automática de registros antigos (executado uma vez por corretor)
+  useEffect(() => {
+    const corretorId = getCorretorId();
+    if (corretorId) {
+      const migrationKey = `veiculos_migrated_${corretorId}`;
+      const jaMigrado = localStorage.getItem(migrationKey);
+      
+      if (!jaMigrado) {
+        console.log('🔄 Migrando veículos antigos para', corretorId);
+        
+        // Associar veículos existentes ao corretor atual
+        adicionarAssociacoesEmLote('veiculo', [
+          { registroId: 'VEI-00001', corretorId },
+          { registroId: 'VEI-00002', corretorId },
+        ]);
+        
+        localStorage.setItem(migrationKey, 'true');
+        console.log('✅ Migração de veículos concluída');
+        
+        // Recarregar veículos após migração
+        setTimeout(() => {
+          loadVehicles();
+        }, 500);
+      }
+    }
+  }, []);
 
   const loadVehicles = async () => {
     try {

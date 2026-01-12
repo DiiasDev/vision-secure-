@@ -9,10 +9,16 @@ import {
   ChevronRight
 } from "lucide-react";
 import { SidebarItem } from "./SidebarItem";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { isAdmin } from "../../Utils/permissions";
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isAdminUser, setIsAdminUser] = useState(false);
+
+  useEffect(() => {
+    setIsAdminUser(isAdmin());
+  }, []);
 
   return (
     <aside
@@ -125,15 +131,17 @@ export function Sidebar() {
           ]}
         />
 
-        <SidebarItem
-          icon={UserCog}
-          label="Corretores"
-          isCollapsed={isCollapsed}
-          subTabs={[
-            { label: "Criar Corretor", to: "/corretores/criar", type: "create" },
-            { label: "Listar Corretores", to: "/corretores/listar", type: "list" }
-          ]}
-        />
+        {isAdminUser && (
+          <SidebarItem
+            icon={UserCog}
+            label="Corretores"
+            isCollapsed={isCollapsed}
+            subTabs={[
+              { label: "Criar Corretor", to: "/corretores/criar", type: "create" },
+              { label: "Listar Corretores", to: "/corretores/listar", type: "list" }
+            ]}
+          />
+        )}
 
         <SidebarItem
           icon={FileText}

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   IconButton,
   Menu,
@@ -11,13 +12,13 @@ import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
 import WbSunnyOutlinedIcon from "@mui/icons-material/WbSunnyOutlined";
 import LogoutIcon from "@mui/icons-material/Logout";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
+import { logoutUser } from "../../Services/auth";
 import "../../Styles/theme.css"
 
 type HeaderProps = {
   userName: string;
   isDarkMode: boolean;
   onToggleTheme: () => void;
-  onLogout: () => void;
   notificationsCount?: number;
 };
 
@@ -25,10 +26,10 @@ export default function Header({
   userName,
   isDarkMode,
   onToggleTheme,
-  onLogout,
   notificationsCount = 0,
 }: HeaderProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const navigate = useNavigate();
 
   const openMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -36,6 +37,11 @@ export default function Header({
 
   const closeMenu = () => {
     setAnchorEl(null);
+  };
+
+  const handleLogout = async () => {
+    await logoutUser();
+    navigate("/login");
   };
 
   return (
@@ -189,7 +195,7 @@ export default function Header({
           <MenuItem
             onClick={() => {
               closeMenu();
-              onLogout();
+              handleLogout();
             }}
             sx={{
               color: "var(--color-danger) !important",

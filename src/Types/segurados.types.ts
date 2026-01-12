@@ -15,4 +15,5 @@ export interface segurado {
     telefone: string;
     tipo_pessoa: string;
     whatsapp: string;
+    corretor?: string; // ID do corretor responsável
 }

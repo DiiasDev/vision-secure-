@@ -1,8 +1,13 @@
 import { frappe } from "./frappeClient";
 import type { seguradora } from "../Types/seguradoras.types";
+import { isAdmin } from "../Utils/permissions";
 
 export async function newSeguradora(dados: seguradora) {
   try {
+    // Apenas admin pode criar seguradoras
+    if (!isAdmin()) {
+      throw new Error("Apenas administradores podem cadastrar seguradoras");
+    }
     const { data } = await frappe.post("/resource/Seguradoras", dados);
     return data.data;
   } catch (error: any) {
@@ -28,6 +33,10 @@ export async function getSeguradoras(): Promise<seguradora[]> {
 
 export async function atualizarSeguradora(name: string, dados: Partial<seguradora>) {
   try {
+    // Apenas admin pode editar seguradoras
+    if (!isAdmin()) {
+      throw new Error("Apenas administradores podem editar seguradoras");
+    }
     const response = await frappe.put(`/resource/Seguradoras/${name}`, dados);
     return response.data.data;
   } catch (error: any) {
@@ -38,6 +47,10 @@ export async function atualizarSeguradora(name: string, dados: Partial<segurador
 
 export async function deletarSeguradora(name: string) {
   try {
+    // Apenas admin pode deletar seguradoras
+    if (!isAdmin()) {
+      throw new Error("Apenas administradores podem deletar seguradoras");
+    }
     // Usando método customizado do Frappe para forçar exclusão
     await frappe.post('/method/frappe.client.delete', {
       doctype: 'Seguradoras',
