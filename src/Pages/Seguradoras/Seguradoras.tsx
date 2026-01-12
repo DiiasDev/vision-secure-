@@ -4,6 +4,7 @@ import { Tabs, Tab, Box } from '@mui/material';
 import { Add as AddIcon, List as ListIcon } from '@mui/icons-material';
 import FormSeguradoras from '../../Components/Seguradoras/FormSeguradoras';
 import ListaSeguradoras from '../../Components/Seguradoras/ListaSeguradoras';
+import type { seguradora } from '../../Types/seguradoras.types';
 
 interface SeguradorasProps {
     initialTab?: number;
@@ -11,6 +12,8 @@ interface SeguradorasProps {
 
 export default function Seguradoras({ initialTab = 0 }: SeguradorasProps) {
     const [activeTab, setActiveTab] = useState(initialTab);
+    const [editingSeguradora, setEditingSeguradora] = useState<seguradora | undefined>(undefined);
+    const [refreshList, setRefreshList] = useState(0);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -19,12 +22,26 @@ export default function Seguradoras({ initialTab = 0 }: SeguradorasProps) {
 
     const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
         setActiveTab(newValue);
+        setEditingSeguradora(undefined); // Clear editing state when switching tabs
         // Atualizar a URL quando a tab mudar
         if (newValue === 0) {
             navigate('/seguradoras/listar');
         } else if (newValue === 1) {
             navigate('/seguradoras/criar');
         }
+    };
+
+    const handleEdit = (seguradora: seguradora) => {
+        setEditingSeguradora(seguradora);
+        setActiveTab(1); // Switch to form tab
+        navigate('/seguradoras/criar');
+    };
+
+    const handleFormSuccess = () => {
+        setEditingSeguradora(undefined);
+        setActiveTab(0); // Switch back to list tab
+        navigate('/seguradoras/listar');
+        setRefreshList(prev => prev + 1); // Trigger list refresh
     };
 
     return (
@@ -57,15 +74,18 @@ export default function Seguradoras({ initialTab = 0 }: SeguradorasProps) {
                     }}
                 >
                     <Tab icon={<ListIcon />} iconPosition="start" label="Listar Seguradoras" />
-                    <Tab icon={<AddIcon />} iconPosition="start" label="Cadastrar Seguradora" />
+                    <Tab icon={<AddIcon />} iconPosition="start" label={editingSeguradora ? "Editar Seguradora" : "Cadastrar Seguradora"} />
                 </Tabs>
             </Box>
 
             <Box sx={{ p: 0 }}>
-                {activeTab === 0 && <ListaSeguradoras />}
+                {activeTab === 0 && <ListaSeguradoras key={refreshList} onEdit={handleEdit} />}
                 {activeTab === 1 && (
                     <div className="p-6">
-                        <FormSeguradoras />
+                        <FormSeguradoras 
+                            seguradoraData={editingSeguradora}
+                            onSuccess={handleFormSuccess}
+                        />
                     </div>
                 )}
             </Box>

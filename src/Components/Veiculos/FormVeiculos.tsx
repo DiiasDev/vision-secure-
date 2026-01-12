@@ -1,17 +1,31 @@
 import FormComponent from "../FormComponent/FormComponent";
 import { fieldsVeiculos } from "./FieldsVeiculos";
-import { newVehicle } from "../../Services/veiculos";
+import { newVehicle, atualizarVeiculo } from "../../Services/veiculos";
+import type { veiculo } from "../../Types/veiculos.types";
 
-export default function FormVeiculos() {
+interface FormVeiculosProps {
+  veiculoData?: veiculo;
+  onSuccess?: () => void;
+}
+
+export default function FormVeiculos({ veiculoData, onSuccess }: FormVeiculosProps) {
+  const isEditing = !!veiculoData;
+
   const handleSubmit = async (data: any) => {
     try {
       console.log("Dados do Veículo:", data);
-      newVehicle(data);
-      alert("Veículo cadastrado com sucesso!");
+      if (isEditing && veiculoData?.name) {
+        await atualizarVeiculo(veiculoData.name, data);
+        alert("Veículo atualizado com sucesso!");
+      } else {
+        await newVehicle(data);
+        alert("Veículo cadastrado com sucesso!");
+      }
+      if (onSuccess) onSuccess();
       return true; 
     } catch (error: any) {
-      console.error("Erro ao criar Veículo:", error);
-      alert("Erro ao criar veículo. Tente novamente.");
+      console.error("Erro ao salvar Veículo:", error);
+      alert(`Erro ao ${isEditing ? 'atualizar' : 'criar'} veículo. Tente novamente.`);
       throw error;
     }
   };
@@ -19,10 +33,11 @@ export default function FormVeiculos() {
   return (
     <FormComponent
       campos={fieldsVeiculos}
-      titulo="Cadastro de Veículo"
-      subtitulo="Preencha os dados do veículo para cadastro no sistema"
+      titulo={isEditing ? "Editar Veículo" : "Cadastro de Veículo"}
+      subtitulo={isEditing ? "Atualize os dados do veículo" : "Preencha os dados do veículo para cadastro no sistema"}
       onSubmit={handleSubmit}
-      submitButtonText="Cadastrar Veículo"
+      submitButtonText={isEditing ? "Atualizar Veículo" : "Cadastrar Veículo"}
+      initialData={veiculoData}
     />
   );
 }

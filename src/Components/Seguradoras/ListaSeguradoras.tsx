@@ -19,7 +19,11 @@ import { SeguradoraCard } from './SeguradoraCard';
 import { SeguradorasTable } from './SeguradorasTable';
 import { SeguradorasFilter } from './SeguradorasFilter';
 
-export default function ListaSeguradoras() {
+interface ListaSeguradorasProps {
+  onEdit?: (seguradora: seguradora) => void;
+}
+
+export default function ListaSeguradoras({ onEdit }: ListaSeguradorasProps) {
   const [seguradoras, setSeguradoras] = useState<seguradora[]>([]);
   const [filteredSeguradoras, setFilteredSeguradoras] = useState<seguradora[]>([]);
   const [loading, setLoading] = useState(true);
@@ -237,13 +241,24 @@ export default function ListaSeguradoras() {
           {viewMode === 'grid' && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {paginatedSeguradoras.map((seguradora) => (
-                <SeguradoraCard key={seguradora.name} seguradora={seguradora} />
+                <SeguradoraCard 
+                  key={seguradora.name} 
+                  seguradora={seguradora}
+                  onEdit={onEdit}
+                  onDelete={loadSeguradoras}
+                />
               ))}
             </div>
           )}
 
           {/* Table View */}
-          {viewMode === 'table' && <SeguradorasTable seguradoras={paginatedSeguradoras} />}
+          {viewMode === 'table' && (
+            <SeguradorasTable 
+              seguradoras={paginatedSeguradoras} 
+              onEdit={onEdit}
+              onDelete={loadSeguradoras}
+            />
+          )}
 
           {/* Pagination */}
           {totalPages > 1 && (

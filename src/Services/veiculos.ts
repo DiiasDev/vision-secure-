@@ -23,3 +23,28 @@ export async function getVehicle(): Promise<veiculo[]> {
     throw error;
   }
 }
+
+export async function atualizarVeiculo(name: string, dados: Partial<veiculo>) {
+  try {
+    const response = await frappe.put(`/resource/Veiculos Segurados/${name}`, dados);
+    return response.data.data;
+  } catch (error: any) {
+    console.error("Erro ao atualizar veículo:", error);
+    throw error;
+  }
+}
+
+export async function deletarVeiculo(name: string) {
+  try {
+    // Usando método customizado do Frappe para forçar exclusão
+    await frappe.post('/method/frappe.client.delete', {
+      doctype: 'Veiculos',
+      name: name,
+      force: 1
+    });
+    return true;
+  } catch (error: any) {
+    console.error("Erro ao deletar Veiculo:", error);
+    throw error;
+  }
+}

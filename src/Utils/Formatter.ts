@@ -5,6 +5,15 @@
  */
 export function formatDate(dateString: string): string {
   if (!dateString) return 'N/A';
+  
+  // Se a data está no formato YYYY-MM-DD, criar a data manualmente para evitar problemas de timezone
+  if (dateString.includes('-') && dateString.length === 10) {
+    const [year, month, day] = dateString.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    if (isNaN(date.getTime())) return 'N/A';
+    return date.toLocaleDateString('pt-BR');
+  }
+  
   const date = new Date(dateString);
   if (isNaN(date.getTime())) return 'N/A';
   return date.toLocaleDateString('pt-BR');

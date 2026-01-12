@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Tabs, Tab, Box } from '@mui/material';
 import FormSeguros from '../../Components/Seguros/FormSeguros';
 import ListaSeguros from '../../Components/Seguros/ListaSeguros';
+import type { seguro } from '../../Types/seguros.types';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -30,10 +32,41 @@ interface SegurosProps {
 }
 
 export default function Seguros({ initialTab = 0 }: SegurosProps) {
-  const [value, setValue] = useState(initialTab);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [editingSeguro, setEditingSeguro] = useState<seguro | null>(null);
+  const [refreshList, setRefreshList] = useState(0);
+  
+  // Determinar o valor atual do tab baseado na rota
+  const currentTab = location.pathname === '/seguros/criar' ? 1 : 0;
+
+  // Sincronizar a rota quando o componente montar
+  useEffect(() => {
+    if (initialTab === 1 && location.pathname !== '/seguros/criar') {
+      navigate('/seguros/criar', { replace: true });
+    } else if (initialTab === 0 && location.pathname !== '/seguros/listar') {
+      navigate('/seguros/listar', { replace: true });
+    }
+  }, [initialTab, location.pathname, navigate]);
 
   const handleChange = (_event: React.SyntheticEvent, newValue: number) => {
-    setValue(newValue);
+    if (newValue === 0) {
+      setEditingSeguro(null);
+      navigate('/seguros/listar');
+    } else {
+      navigate('/seguros/criar');
+    }
+  };
+
+  const handleEdit = (seguro: seguro) => {
+    setEditingSeguro(seguro);
+    navigate('/seguros/criar');
+  };
+
+  const handleFormSuccess = () => {
+    setEditingSeguro(null);
+    setRefreshList(prev => prev + 1);
+    navigate('/seguros/listar');
   };
 
   return (
@@ -46,7 +79,7 @@ export default function Seguros({ initialTab = 0 }: SegurosProps) {
         }}
       >
         <Tabs 
-          value={value} 
+          value={currentTab} 
           onChange={handleChange} 
           aria-label="seguros tabs"
           sx={{
@@ -70,14 +103,14 @@ export default function Seguros({ initialTab = 0 }: SegurosProps) {
           }}
         >
           <Tab label="Lista de Seguros" />
-          <Tab label="Cadastrar Seguro" />
+          <Tab label={editingSeguro ? "Editar Seguro" : "Cadastrar Seguro"} />
         </Tabs>
       </Box>
-      <TabPanel value={value} index={0}>
-        <ListaSeguros />
+      <TabPanel value={currentTab} index={0}>
+        <ListaSeguros key={refreshList} onEdit={handleEdit} />
       </TabPanel>
-      <TabPanel value={value} index={1}>
-        <FormSeguros />
+      <TabPanel value={currentTab} index={1}>
+        <FormSeguros initialData={editingSeguro} onSuccess={handleFormSuccess} />
       </TabPanel>
     </div>
   );

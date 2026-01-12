@@ -19,7 +19,11 @@ import { SeguradoCard } from './SeguradoCard';
 import { SeguradosTable } from './SeguradosTable';
 import { SeguradosFilter } from './SeguradosFilter';
 
-export default function ListarSegurados() {
+interface ListarSeguradosProps {
+  onEdit?: (segurado: segurado) => void;
+}
+
+export default function ListarSegurados({ onEdit }: ListarSeguradosProps) {
   const [segurados, setSegurados] = useState<segurado[]>([]);
   const [filteredSegurados, setFilteredSegurados] = useState<segurado[]>([]);
   const [loading, setLoading] = useState(true);
@@ -237,13 +241,24 @@ export default function ListarSegurados() {
           {viewMode === 'grid' && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {paginatedSegurados.map((segurado) => (
-                <SeguradoCard key={segurado.name} segurado={segurado} />
+                <SeguradoCard 
+                  key={segurado.name} 
+                  segurado={segurado}
+                  onEdit={onEdit}
+                  onDelete={loadSegurados}
+                />
               ))}
             </div>
           )}
 
           {/* Table View */}
-          {viewMode === 'table' && <SeguradosTable segurados={paginatedSegurados} />}
+          {viewMode === 'table' && (
+            <SeguradosTable 
+              segurados={paginatedSegurados} 
+              onEdit={onEdit}
+              onDelete={loadSegurados}
+            />
+          )}
 
           {/* Pagination */}
           {totalPages > 1 && (

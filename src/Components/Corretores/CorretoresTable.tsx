@@ -10,6 +10,13 @@ import {
   IconButton,
   Tooltip,
   Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  DialogContentText,
+  Box,
 } from '@mui/material';
 import {
   WhatsApp as WhatsAppIcon,
@@ -20,17 +27,56 @@ import {
   Cancel as InactiveIcon,
   Pause as SuspendedIcon,
   Work as WorkIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material';
 import type { corretor } from '../../Types/corretores.types';
 import { formatDate, formatPhone, formatCPF } from '../../Utils/Formatter';
 import { getInitials } from '../../Utils/StringHelpers';
 import { openWhatsApp, makePhoneCall, sendEmail } from '../../Utils/ContactHelpers';
+import { deletarCorretor } from '../../Services/corretores';
+import { useState } from 'react';
 
 interface CorretoresTableProps {
   corretores: corretor[];
+  onEdit?: (corretor: corretor) => void;
+  onDelete?: () => void;
 }
 
-export function CorretoresTable({ corretores }: CorretoresTableProps) {
+export function CorretoresTable({ corretores, onEdit, onDelete }: CorretoresTableProps) {
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [corretorToDelete, setCorretorToDelete] = useState<corretor | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteClick = (corretor: corretor) => {
+    setCorretorToDelete(corretor);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!corretorToDelete) return;
+
+    setDeleting(true);
+    try {
+      await deletarCorretor(corretorToDelete.name);
+      setDeleteDialogOpen(false);
+      setCorretorToDelete(null);
+      if (onDelete) {
+        onDelete();
+      }
+    } catch (error) {
+      console.error('Erro ao deletar corretor:', error);
+      alert('Erro ao deletar corretor. Tente novamente.');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setCorretorToDelete(null);
+  };
+
   const handleWhatsAppClick = (corretor: corretor) => {
     openWhatsApp(corretor.whatsapp || corretor.telefone);
   };
@@ -319,6 +365,34 @@ export function CorretoresTable({ corretores }: CorretoresTableProps) {
                         </IconButton>
                       </Tooltip>
                     )}
+                    <Tooltip title="Editar">
+                      <IconButton
+                        size="small"
+                        onClick={() => onEdit?.(corretor)}
+                        sx={{
+                          color: 'var(--color-primary)',
+                          '&:hover': {
+                            backgroundColor: 'var(--color-primary-light)',
+                          },
+                        }}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Deletar">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleDeleteClick(corretor)}
+                        sx={{
+                          color: '#ef4444',
+                          '&:hover': {
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                          },
+                        }}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
                   </div>
                 </TableCell>
               </TableRow>
@@ -326,6 +400,87 @@ export function CorretoresTable({ corretores }: CorretoresTableProps) {
           })}
         </TableBody>
       </Table>
+
+      {/* Delete Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleDeleteCancel}
+        PaperProps={{
+          sx: {
+            borderRadius: '12px',
+            padding: '8px',
+            backgroundColor: 'var(--bg-card)',
+            border: '1px solid var(--border-default)',
+          },
+        }}
+      >
+        <DialogTitle sx={{ pb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <DeleteIcon sx={{ color: '#ef4444', fontSize: 20 }} />
+            </Box>
+            <span style={{ color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: 600 }}>
+              Confirmar Exclusão
+            </span>
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          <DialogContentText sx={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+            Tem certeza que deseja excluir o corretor{' '}
+            <strong style={{ color: 'var(--text-primary)' }}>
+              {corretorToDelete?.nome_completo}
+            </strong>
+            ? Esta ação não pode ser desfeita.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button
+            onClick={handleDeleteCancel}
+            variant="outlined"
+            disabled={deleting}
+            sx={{
+              color: 'var(--text-secondary)',
+              borderColor: 'var(--border-default)',
+              textTransform: 'none',
+              fontWeight: 500,
+              '&:hover': {
+                borderColor: 'var(--text-secondary)',
+                backgroundColor: 'var(--bg-sidebar-hover)',
+              },
+            }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            variant="contained"
+            disabled={deleting}
+            sx={{
+              backgroundColor: '#ef4444',
+              textTransform: 'none',
+              fontWeight: 500,
+              '&:hover': {
+                backgroundColor: '#dc2626',
+              },
+              '&:disabled': {
+                backgroundColor: 'rgba(239, 68, 68, 0.5)',
+              },
+            }}
+          >
+            {deleting ? 'Excluindo...' : 'Excluir'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </TableContainer>
   );
 }

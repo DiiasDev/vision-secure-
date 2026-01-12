@@ -4,6 +4,7 @@ import { Tabs, Tab, Box } from '@mui/material';
 import { PersonAdd as PersonAddIcon, List as ListIcon } from '@mui/icons-material';
 import FormSegurados from '../../Components/Segurados/FormSegurados';
 import ListarSegurados from '../../Components/Segurados/ListaSegurados';
+import type { segurado } from '../../Types/segurados.types';
 
 interface SeguradosProps {
     initialTab?: number;
@@ -11,6 +12,8 @@ interface SeguradosProps {
 
 export default function Segurados({ initialTab = 0 }: SeguradosProps) {
     const [activeTab, setActiveTab] = useState(initialTab);
+    const [editingSegurado, setEditingSegurado] = useState<segurado | undefined>(undefined);
+    const [refreshList, setRefreshList] = useState(0);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -19,12 +22,26 @@ export default function Segurados({ initialTab = 0 }: SeguradosProps) {
 
     const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
         setActiveTab(newValue);
+        setEditingSegurado(undefined); // Clear editing state when switching tabs
         // Atualizar a URL quando a tab mudar
         if (newValue === 0) {
             navigate('/segurados/listar');
         } else if (newValue === 1) {
             navigate('/segurados/criar');
         }
+    };
+
+    const handleEdit = (segurado: segurado) => {
+        setEditingSegurado(segurado);
+        setActiveTab(1); // Switch to form tab
+        navigate('/segurados/criar');
+    };
+
+    const handleFormSuccess = () => {
+        setEditingSegurado(undefined);
+        setActiveTab(0); // Switch back to list tab
+        navigate('/segurados/listar');
+        setRefreshList(prev => prev + 1); // Trigger list refresh
     };
 
     return (
@@ -57,15 +74,18 @@ export default function Segurados({ initialTab = 0 }: SeguradosProps) {
                     }}
                 >
                     <Tab icon={<ListIcon />} iconPosition="start" label="Listar Segurados" />
-                    <Tab icon={<PersonAddIcon />} iconPosition="start" label="Cadastrar Segurado" />
+                    <Tab icon={<PersonAddIcon />} iconPosition="start" label={editingSegurado ? "Editar Segurado" : "Cadastrar Segurado"} />
                 </Tabs>
             </Box>
 
             <Box sx={{ p: 0 }}>
-                {activeTab === 0 && <ListarSegurados />}
+                {activeTab === 0 && <ListarSegurados key={refreshList} onEdit={handleEdit} />}
                 {activeTab === 1 && (
                     <div className="p-6">
-                        <FormSegurados />
+                        <FormSegurados 
+                            seguradoData={editingSegurado}
+                            onSuccess={handleFormSuccess}
+                        />
                     </div>
                 )}
             </Box>

@@ -19,7 +19,11 @@ import { VeiculoCard } from './VeiculoCard';
 import { VeiculosTable } from './VeiculosTable';
 import { VeiculosFilter } from './VeiculosFilter';
 
-export default function ListaVeiculos() {
+interface ListaVeiculosProps {
+  onEdit?: (veiculo: veiculo) => void;
+}
+
+export default function ListaVeiculos({ onEdit }: ListaVeiculosProps = {}) {
   const [veiculos, setVeiculos] = useState<veiculo[]>([]);
   const [filteredVeiculos, setFilteredVeiculos] = useState<veiculo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -259,13 +263,13 @@ export default function ListaVeiculos() {
           {viewMode === 'grid' && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {paginatedVeiculos.map((veiculo) => (
-                <VeiculoCard key={veiculo.name} veiculo={veiculo} />
+                <VeiculoCard key={veiculo.name} veiculo={veiculo} onEdit={onEdit} onDelete={loadVehicles} />
               ))}
             </div>
           )}
 
           {/* Table View */}
-          {viewMode === 'table' && <VeiculosTable veiculos={paginatedVeiculos} />}
+          {viewMode === 'table' && <VeiculosTable veiculos={paginatedVeiculos} onEdit={onEdit} onDelete={loadVehicles} />}
 
           {/* Pagination */}
           {totalPages > 1 && (

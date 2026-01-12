@@ -8,6 +8,12 @@ import {
   Box,
   Chip,
   Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  DialogContentText,
 } from '@mui/material';
 import {
   Email as EmailIcon,
@@ -24,18 +30,48 @@ import {
   Cancel as InactiveIcon,
   Pause as SuspendedIcon,
   Work as WorkIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material';
 import type { corretor } from '../../Types/corretores.types';
 import { formatDate, formatPhone, formatCPF } from '../../Utils/Formatter';
 import { getInitials } from '../../Utils/StringHelpers';
 import { openWhatsApp, makePhoneCall, sendEmail } from '../../Utils/ContactHelpers';
+import { deletarCorretor } from '../../Services/corretores';
 
 interface CorretorCardProps {
   corretor: corretor;
+  onEdit?: (corretor: corretor) => void;
+  onDelete?: () => void;
 }
 
-export function CorretorCard({ corretor }: CorretorCardProps) {
+export function CorretorCard({ corretor, onEdit, onDelete }: CorretorCardProps) {
   const [expanded, setExpanded] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteClick = () => {
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      setDeleting(true);
+      await deletarCorretor(corretor.name);
+      setDeleteDialogOpen(false);
+      if (onDelete) onDelete();
+    } catch (error: any) {
+      console.error('Erro ao deletar corretor:', error);
+      const errorMessage = error.message || 'Erro ao deletar corretor. Tente novamente.';
+      alert(errorMessage);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteDialogOpen(false);
+  };
 
   const handleWhatsAppClick = () => {
     openWhatsApp(corretor.whatsapp || corretor.telefone);
@@ -163,6 +199,36 @@ export function CorretorCard({ corretor }: CorretorCardProps) {
 
           {/* Action Buttons */}
           <div className="flex items-center gap-1">
+            {onEdit && (
+              <Tooltip title="Editar">
+                <IconButton
+                  size="small"
+                  onClick={() => onEdit(corretor)}
+                  sx={{
+                    color: 'var(--color-primary)',
+                    '&:hover': {
+                      backgroundColor: 'var(--color-primary-light)',
+                    },
+                  }}
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+            <Tooltip title="Deletar">
+              <IconButton
+                size="small"
+                onClick={handleDeleteClick}
+                sx={{
+                  color: '#ef4444',
+                  '&:hover': {
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                  },
+                }}
+              >
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
             {corretor.whatsapp && (
               <Tooltip title="WhatsApp">
                 <IconButton
@@ -378,6 +444,87 @@ export function CorretorCard({ corretor }: CorretorCardProps) {
           </Box>
         </Collapse>
       </CardContent>
+
+      {/* Delete Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleCancelDelete}
+        PaperProps={{
+          sx: {
+            borderRadius: '12px',
+            padding: '8px',
+            backgroundColor: 'var(--bg-card)',
+            border: '1px solid var(--border-default)',
+          },
+        }}
+      >
+        <DialogTitle sx={{ pb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <DeleteIcon sx={{ color: '#ef4444', fontSize: 20 }} />
+            </Box>
+            <span style={{ color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: 600 }}>
+              Confirmar Exclusão
+            </span>
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          <DialogContentText sx={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+            Tem certeza que deseja excluir o corretor{' '}
+            <strong style={{ color: 'var(--text-primary)' }}>
+              {corretor.nome_completo}
+            </strong>
+            ? Esta ação não pode ser desfeita.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button
+            onClick={handleCancelDelete}
+            variant="outlined"
+            disabled={deleting}
+            sx={{
+              color: 'var(--text-secondary)',
+              borderColor: 'var(--border-default)',
+              textTransform: 'none',
+              fontWeight: 500,
+              '&:hover': {
+                borderColor: 'var(--text-secondary)',
+                backgroundColor: 'var(--bg-sidebar-hover)',
+              },
+            }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleConfirmDelete}
+            variant="contained"
+            disabled={deleting}
+            sx={{
+              backgroundColor: '#ef4444',
+              textTransform: 'none',
+              fontWeight: 500,
+              '&:hover': {
+                backgroundColor: '#dc2626',
+              },
+              '&:disabled': {
+                backgroundColor: 'rgba(239, 68, 68, 0.5)',
+              },
+            }}
+          >
+            {deleting ? 'Excluindo...' : 'Excluir'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Card>
   );
 }

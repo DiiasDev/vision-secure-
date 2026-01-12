@@ -1,17 +1,31 @@
 import FormComponent from "../FormComponent/FormComponent";
 import { fieldsSeguradoras } from "./FeldsSeguradoras";
-import { newSeguradora } from "../../Services/Seguradoras";
+import { newSeguradora, atualizarSeguradora } from "../../Services/Seguradoras";
+import type { seguradora } from "../../Types/seguradoras.types";
 
-export default function FormSeguradoras() {
+interface FormSeguradorasProps {
+  seguradoraData?: seguradora;
+  onSuccess?: () => void;
+}
+
+export default function FormSeguradoras({ seguradoraData, onSuccess }: FormSeguradorasProps) {
+  const isEditing = !!seguradoraData;
+
   const handleSubmit = async (data: any) => {
     try {
       console.log("Dados da Seguradora:", data);
-      newSeguradora(data);
-      alert("Seguradora cadastrada com sucesso!");
+      if (isEditing && seguradoraData?.name) {
+        await atualizarSeguradora(seguradoraData.name, data);
+        alert("Seguradora atualizada com sucesso!");
+      } else {
+        await newSeguradora(data);
+        alert("Seguradora cadastrada com sucesso!");
+      }
+      if (onSuccess) onSuccess();
       return true; 
     } catch (error: any) {
-      console.error("Erro ao criar Seguradora:", error);
-      alert("Erro ao criar seguradora. Tente novamente.");
+      console.error("Erro ao salvar Seguradora:", error);
+      alert(`Erro ao ${isEditing ? 'atualizar' : 'criar'} seguradora. Tente novamente.`);
       throw error; 
     }
   };
@@ -19,10 +33,11 @@ export default function FormSeguradoras() {
   return (
     <FormComponent
       campos={fieldsSeguradoras}
-      titulo="Cadastrar Nova Seguradora"
-      subtitulo="Preencha os dados abaixo para registrar uma nova seguradora no sistema"
+      titulo={isEditing ? "Editar Seguradora" : "Cadastrar Nova Seguradora"}
+      subtitulo={isEditing ? "Atualize os dados da seguradora" : "Preencha os dados abaixo para registrar uma nova seguradora no sistema"}
       onSubmit={handleSubmit}
-      submitButtonText="Cadastrar Seguradora"
+      submitButtonText={isEditing ? "Atualizar Seguradora" : "Cadastrar Seguradora"}
+      initialData={seguradoraData}
     />
   );
 }

@@ -52,10 +52,6 @@ export default function Dashboard() {
     }
   };
 
-  const handlePageChange = (_event: unknown, value: number) => {
-    setPage(value);
-  };
-
   const handleFilterChange = (newFilter: 'all' | 'expiring') => {
     setFilter(newFilter);
     setPage(1);

@@ -45,7 +45,6 @@ export const camposSeguros: Field[] = [
         label: 'Segurado',
         fieldtype: 'Select',
         required: true,
-        isAsync: true,
         options: [],
         section: 'Partes Envolvidas'
     },
@@ -54,7 +53,6 @@ export const camposSeguros: Field[] = [
         label: 'Seguradora',
         fieldtype: 'Select',
         required: true,
-        isAsync: true,
         options: [],
         section: 'Partes Envolvidas'
     },
@@ -63,7 +61,6 @@ export const camposSeguros: Field[] = [
         label: 'Corretor Responsável',
         fieldtype: 'Select',
         required: true,
-        isAsync: true,
         options: [],
         section: 'Partes Envolvidas'
     },
@@ -72,7 +69,6 @@ export const camposSeguros: Field[] = [
         label: 'Veículo',
         fieldtype: 'Select',
         required: false,
-        isAsync: true,
         options: [],
         section: 'Partes Envolvidas'
     },

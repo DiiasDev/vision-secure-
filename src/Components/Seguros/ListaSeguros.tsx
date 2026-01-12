@@ -14,7 +14,11 @@ import type { seguro } from '../../Types/seguros.types';
 import { SegurosTable } from './SegurosTable';
 import { SegurosFilter } from './SegurosFilter';
 
-export default function ListaSeguros() {
+interface ListaSegurosProps {
+  onEdit?: (seguro: seguro) => void;
+}
+
+export default function ListaSeguros({ onEdit }: ListaSegurosProps = {}) {
   const [seguros, setSeguros] = useState<seguro[]>([]);
   const [filteredSeguros, setFilteredSeguros] = useState<seguro[]>([]);
   const [loading, setLoading] = useState(true);
@@ -272,7 +276,7 @@ export default function ListaSeguros() {
       ) : (
         <>
           {/* Table View */}
-          <SegurosTable seguros={paginatedSeguros} />
+          <SegurosTable seguros={paginatedSeguros} onEdit={onEdit} onDelete={loadSeguros} />
 
           {/* Pagination */}
           {totalPages > 1 && (

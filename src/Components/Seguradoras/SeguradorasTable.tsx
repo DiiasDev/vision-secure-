@@ -10,6 +10,13 @@ import {
   IconButton,
   Tooltip,
   Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  DialogContentText,
+  Box,
 } from '@mui/material';
 import {
   Language as LanguageIcon,
@@ -19,17 +26,27 @@ import {
   Cancel as InactiveIcon,
   Pause as SuspendedIcon,
   Code as CodeIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material';
 import type { seguradora } from '../../Types/seguradoras.types';
 import { formatPhone } from '../../Utils/Formatter';
 import { getInitials } from '../../Utils/StringHelpers';
 import { makePhoneCall, sendEmail } from '../../Utils/ContactHelpers';
+import { deletarSeguradora } from '../../Services/Seguradoras';
+import { useState } from 'react';
 
 interface SeguradorasTableProps {
   seguradoras: seguradora[];
+  onEdit?: (seguradora: seguradora) => void;
+  onDelete?: () => void;
 }
 
-export function SeguradorasTable({ seguradoras }: SeguradorasTableProps) {
+export function SeguradorasTable({ seguradoras, onEdit, onDelete }: SeguradorasTableProps) {
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [seguradoraToDelete, setSeguradoraToDelete] = useState<seguradora | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   const handlePhoneClick = (phone: string) => {
     makePhoneCall(phone);
   };
@@ -40,6 +57,33 @@ export function SeguradorasTable({ seguradoras }: SeguradorasTableProps) {
 
   const handleWebsiteClick = (site: string) => {
     window.open(site.startsWith('http') ? site : `https://${site}`, '_blank');
+  };
+
+  const handleDeleteClick = (seguradora: seguradora) => {
+    setSeguradoraToDelete(seguradora);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!seguradoraToDelete || !seguradoraToDelete.name) return;
+
+    try {
+      setDeleting(true);
+      await deletarSeguradora(seguradoraToDelete.name);
+      setDeleteDialogOpen(false);
+      setSeguradoraToDelete(null);
+      if (onDelete) onDelete();
+    } catch (error) {
+      console.error('Erro ao deletar seguradora:', error);
+      alert('Erro ao deletar seguradora. Tente novamente.');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteDialogOpen(false);
+    setSeguradoraToDelete(null);
   };
 
   const getStatusIcon = (status: string) => {
@@ -280,6 +324,36 @@ export function SeguradorasTable({ seguradoras }: SeguradorasTableProps) {
                 {/* Ações */}
                 <TableCell align="center" sx={{ py: 2 }}>
                   <div className="flex items-center justify-center gap-1">
+                    {onEdit && (
+                      <Tooltip title="Editar">
+                        <IconButton
+                          size="small"
+                          onClick={() => onEdit(seguradora)}
+                          sx={{
+                            color: 'var(--color-primary)',
+                            '&:hover': {
+                              backgroundColor: 'var(--color-primary-light)',
+                            },
+                          }}
+                        >
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                    <Tooltip title="Deletar">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleDeleteClick(seguradora)}
+                        sx={{
+                          color: '#ef4444',
+                          '&:hover': {
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                          },
+                        }}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
                     {seguradora.site && (
                       <Tooltip title="Visitar Site">
                         <IconButton
@@ -335,6 +409,125 @@ export function SeguradorasTable({ seguradoras }: SeguradorasTableProps) {
           })}
         </TableBody>
       </Table>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleCancelDelete}
+        aria-labelledby="delete-dialog-title"
+        aria-describedby="delete-dialog-description"
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            minWidth: 400,
+            backgroundColor: 'var(--bg-card)',
+            border: '1px solid var(--border-default)',
+          },
+        }}
+      >
+        <DialogTitle 
+          id="delete-dialog-title"
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            pb: 2,
+            color: 'var(--text-primary)',
+            fontSize: '1.25rem',
+            fontWeight: 600,
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 48,
+              height: 48,
+              borderRadius: '50%',
+              backgroundColor: 'var(--color-error-bg)',
+            }}
+          >
+            <DeleteIcon sx={{ color: 'var(--color-error)', fontSize: 28 }} />
+          </Box>
+          Confirmar Exclusão
+        </DialogTitle>
+        <DialogContent sx={{ pb: 2 }}>
+          <DialogContentText 
+            id="delete-dialog-description"
+            sx={{ 
+              color: 'var(--text-secondary)',
+              fontSize: '0.95rem',
+              lineHeight: 1.6,
+            }}
+          >
+            Tem certeza que deseja deletar a seguradora{' '}
+            <Box 
+              component="span" 
+              sx={{ 
+                fontWeight: 700,
+                color: 'var(--text-primary)',
+              }}
+            >
+              {seguradoraToDelete?.nome_seguradora}
+            </Box>
+            ?<br />
+            <Box 
+              component="span" 
+              sx={{ 
+                color: 'var(--color-error)',
+                fontWeight: 500,
+                mt: 1,
+                display: 'inline-block',
+              }}
+            >
+              Esta ação não pode ser desfeita.
+            </Box>
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+          <Button 
+            onClick={handleCancelDelete} 
+            disabled={deleting}
+            variant="outlined"
+            sx={{
+              borderColor: 'var(--border-default)',
+              color: 'var(--text-primary)',
+              textTransform: 'none',
+              fontWeight: 500,
+              px: 3,
+              '&:hover': {
+                borderColor: 'var(--color-primary)',
+                backgroundColor: 'var(--color-primary-light)',
+              },
+            }}
+          >
+            Cancelar
+          </Button>
+          <Button 
+            onClick={handleConfirmDelete} 
+            variant="contained"
+            disabled={deleting}
+            startIcon={deleting ? null : <DeleteIcon />}
+            sx={{
+              backgroundColor: 'var(--color-error)',
+              color: 'white',
+              textTransform: 'none',
+              fontWeight: 600,
+              px: 3,
+              '&:hover': {
+                backgroundColor: '#dc2626',
+              },
+              '&:disabled': {
+                backgroundColor: 'var(--color-error)',
+                opacity: 0.6,
+              },
+            }}
+          >
+            {deleting ? 'Deletando...' : 'Deletar'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </TableContainer>
   );
 }

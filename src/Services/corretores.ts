@@ -23,3 +23,28 @@ export async function getCorretor(): Promise<corretor[]> {
     throw error
   }
 }
+
+export async function atualizarCorretor(name: string, dados: Partial<corretor>) {
+  try {
+    const response = await frappe.put(`/resource/Corretores/${name}`, dados);
+    return response.data.data;
+  } catch (error: any) {
+    console.error("Erro ao atualizar corretor:", error);
+    throw error;
+  }
+}
+
+export async function deletarCorretor(name: string) {
+  try {
+    // Usando método customizado do Frappe para forçar exclusão
+    await frappe.post('/method/frappe.client.delete', {
+      doctype: 'Corretores',
+      name: name,
+      force: 1
+    });
+    return true;
+  } catch (error: any) {
+    console.error("Erro ao deletar corretor:", error);
+    throw error;
+  }
+}

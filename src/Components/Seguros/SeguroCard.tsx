@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, CardContent, Chip, Avatar, IconButton, Collapse } from '@mui/material';
+import { Card, CardContent, Chip, Avatar, IconButton, Collapse, Dialog, DialogTitle, DialogContent, DialogActions, Button, DialogContentText, Box, Tooltip } from '@mui/material';
 import { 
   DirectionsCar,
   Home,
@@ -8,17 +8,47 @@ import {
   Flight,
   MoreHoriz,
   ExpandMore,
-  ExpandLess
+  ExpandLess,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material';
 import type { seguro } from '../../Types/seguros.types';
 import { formatDate } from '../../Utils/Formatter';
+import { deletarSeguro } from '../../Services/Seguros';
 
 interface SeguroCardProps {
   seguro: seguro;
+  onEdit?: (seguro: seguro) => void;
+  onDelete?: () => void;
 }
 
-export function SeguroCard({ seguro }: SeguroCardProps) {
+export function SeguroCard({ seguro, onEdit, onDelete }: SeguroCardProps) {
   const [expanded, setExpanded] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteClick = () => {
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      setDeleting(true);
+      await deletarSeguro(seguro.name);
+      setDeleteDialogOpen(false);
+      if (onDelete) onDelete();
+    } catch (error: any) {
+      console.error('Erro ao deletar seguro:', error);
+      const errorMessage = error.message || 'Erro ao deletar seguro. Tente novamente.';
+      alert(errorMessage);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteDialogOpen(false);
+  };
 
   const getTipoIcon = () => {
     switch (seguro.tipo_seguro) {
@@ -113,13 +143,45 @@ export function SeguroCard({ seguro }: SeguroCardProps) {
             </p>
           </div>
 
-          <IconButton 
-            size="small" 
-            onClick={() => setExpanded(!expanded)}
-            sx={{ alignSelf: 'flex-start' }}
-          >
-            {expanded ? <ExpandLess /> : <ExpandMore />}
-          </IconButton>
+          <div style={{ display: 'flex', gap: '4px' }}>
+            {onEdit && (
+              <Tooltip title="Editar">
+                <IconButton
+                  size="small"
+                  onClick={() => onEdit(seguro)}
+                  sx={{
+                    color: 'var(--color-primary)',
+                    '&:hover': {
+                      backgroundColor: 'var(--color-primary-light)',
+                    },
+                  }}
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+            <Tooltip title="Deletar">
+              <IconButton
+                size="small"
+                onClick={handleDeleteClick}
+                sx={{
+                  color: '#ef4444',
+                  '&:hover': {
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                  },
+                }}
+              >
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <IconButton 
+              size="small" 
+              onClick={() => setExpanded(!expanded)}
+              sx={{ alignSelf: 'flex-start' }}
+            >
+              {expanded ? <ExpandLess /> : <ExpandMore />}
+            </IconButton>
+          </div>
         </div>
 
         <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
@@ -176,6 +238,87 @@ export function SeguroCard({ seguro }: SeguroCardProps) {
           </div>
         </Collapse>
       </CardContent>
+
+      {/* Delete Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleCancelDelete}
+        PaperProps={{
+          sx: {
+            borderRadius: '12px',
+            padding: '8px',
+            backgroundColor: 'var(--bg-card)',
+            border: '1px solid var(--border-default)',
+          },
+        }}
+      >
+        <DialogTitle sx={{ pb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <DeleteIcon sx={{ color: '#ef4444', fontSize: 20 }} />
+            </Box>
+            <span style={{ color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: 600 }}>
+              Confirmar Exclusão
+            </span>
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          <DialogContentText sx={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+            Tem certeza que deseja excluir o seguro{' '}
+            <strong style={{ color: 'var(--text-primary)' }}>
+              {seguro.numero_apolice}
+            </strong>
+            ? Esta ação não pode ser desfeita.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button
+            onClick={handleCancelDelete}
+            variant="outlined"
+            disabled={deleting}
+            sx={{
+              color: 'var(--text-secondary)',
+              borderColor: 'var(--border-default)',
+              textTransform: 'none',
+              fontWeight: 500,
+              '&:hover': {
+                borderColor: 'var(--text-secondary)',
+                backgroundColor: 'var(--bg-sidebar-hover)',
+              },
+            }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleConfirmDelete}
+            variant="contained"
+            disabled={deleting}
+            sx={{
+              backgroundColor: '#ef4444',
+              textTransform: 'none',
+              fontWeight: 500,
+              '&:hover': {
+                backgroundColor: '#dc2626',
+              },
+              '&:disabled': {
+                backgroundColor: 'rgba(239, 68, 68, 0.5)',
+              },
+            }}
+          >
+            {deleting ? 'Excluindo...' : 'Excluir'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Card>
   );
 }

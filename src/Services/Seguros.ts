@@ -14,6 +14,31 @@ export async function newSeguro(dados: seguro) {
   }
 }
 
+export async function atualizarSeguro(name: string, dados: Partial<seguro>) {
+  try {
+    const response = await frappe.put(`/resource/Seguros/${name}`, dados);
+    return response.data.data;
+  } catch (error: any) {
+    console.error("Erro ao atualizar seguro:", error);
+    throw error;
+  }
+}
+
+export async function deletarSeguro(name: string) {
+  try {
+    // Usando método customizado do Frappe para forçar exclusão
+    await frappe.post('/method/frappe.client.delete', {
+      doctype: 'Seguros',
+      name: name,
+      force: 1
+    });
+    return true;
+  } catch (error: any) {
+    console.error("Erro ao deletar Seguro:", error);
+    throw error;
+  }
+}
+
 export async function getSeguros(): Promise<seguro[]> {
   try {
     const seguros = await frappe.get("/resource/Seguros", {

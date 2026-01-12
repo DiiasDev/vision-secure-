@@ -13,6 +13,12 @@ import {
   Collapse,
   Box,
   Avatar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  DialogContentText,
 } from '@mui/material';
 import {
   WhatsApp as WhatsAppIcon,
@@ -31,17 +37,55 @@ import {
   Badge as BadgeIcon,
   AccessTime as AccessTimeIcon,
   LocalShipping as LocalShippingIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material';
 import type { seguro } from '../../Types/seguros.types';
 import { formatDate, formatCPF, formatPhone } from '../../Utils/Formatter';
 import { getInitials } from '../../Utils/StringHelpers';
+import { deletarSeguro } from '../../Services/Seguros';
 
 interface SegurosTableProps {
   seguros: seguro[];
+  onEdit?: (seguro: seguro) => void;
+  onDelete?: () => void;
 }
 
-export function SegurosTable({ seguros }: SegurosTableProps) {
+export function SegurosTable({ seguros, onEdit, onDelete }: SegurosTableProps) {
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [seguroToDelete, setSeguroToDelete] = useState<seguro | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteClick = (seguro: seguro) => {
+    setSeguroToDelete(seguro);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!seguroToDelete) return;
+
+    setDeleting(true);
+    try {
+      await deletarSeguro(seguroToDelete.name);
+      setDeleteDialogOpen(false);
+      setSeguroToDelete(null);
+      if (onDelete) {
+        onDelete();
+      }
+    } catch (error: any) {
+      console.error('Erro ao deletar seguro:', error);
+      const errorMessage = error.message || 'Erro ao deletar seguro. Tente novamente.';
+      alert(errorMessage);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setSeguroToDelete(null);
+  };
 
   const getTipoIcon = (tipo: string) => {
     const iconProps = { fontSize: 20 as const };
@@ -596,31 +640,67 @@ export function SegurosTable({ seguros }: SegurosTableProps) {
 
                   {/* Ações */}
                   <TableCell align="center">
-                    <Tooltip title="Enviar mensagem no WhatsApp" arrow>
-                      <IconButton
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const phone = seguro.segurado_whatsapp || seguro.segurado_telefone || '';
-                          if (phone) {
-                            handleWhatsAppClick(seguro, phone);
-                          }
-                        }}
-                        disabled={!seguro.segurado_whatsapp && !seguro.segurado_telefone}
-                        sx={{
-                          color: '#25D366',
-                          '&:hover': {
-                            backgroundColor: 'rgba(37, 211, 102, 0.1)',
-                          },
-                          '&.Mui-disabled': {
-                            color: 'var(--text-muted)',
-                            opacity: 0.5,
-                          },
-                        }}
-                      >
-                        <WhatsAppIcon sx={{ fontSize: 20 }} />
-                      </IconButton>
-                    </Tooltip>
+                    <div className="flex items-center justify-center gap-1">
+                      <Tooltip title="Editar">
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEdit?.(seguro);
+                          }}
+                          sx={{
+                            color: 'var(--color-primary)',
+                            '&:hover': {
+                              backgroundColor: 'var(--color-primary-light)',
+                            },
+                          }}
+                        >
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Deletar">
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteClick(seguro);
+                          }}
+                          sx={{
+                            color: '#ef4444',
+                            '&:hover': {
+                              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            },
+                          }}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Enviar mensagem no WhatsApp" arrow>
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const phone = seguro.segurado_whatsapp || seguro.segurado_telefone || '';
+                            if (phone) {
+                              handleWhatsAppClick(seguro, phone);
+                            }
+                          }}
+                          disabled={!seguro.segurado_whatsapp && !seguro.segurado_telefone}
+                          sx={{
+                            color: '#25D366',
+                            '&:hover': {
+                              backgroundColor: 'rgba(37, 211, 102, 0.1)',
+                            },
+                            '&.Mui-disabled': {
+                              color: 'var(--text-muted)',
+                              opacity: 0.5,
+                            },
+                          }}
+                        >
+                          <WhatsAppIcon sx={{ fontSize: 20 }} />
+                        </IconButton>
+                      </Tooltip>
+                    </div>
                   </TableCell>
                 </TableRow>
 
@@ -842,6 +922,87 @@ export function SegurosTable({ seguros }: SegurosTableProps) {
           })}
         </TableBody>
       </Table>
+
+      {/* Delete Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleDeleteCancel}
+        PaperProps={{
+          sx: {
+            borderRadius: '12px',
+            padding: '8px',
+            backgroundColor: 'var(--bg-card)',
+            border: '1px solid var(--border-default)',
+          },
+        }}
+      >
+        <DialogTitle sx={{ pb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <DeleteIcon sx={{ color: '#ef4444', fontSize: 20 }} />
+            </Box>
+            <span style={{ color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: 600 }}>
+              Confirmar Exclusão
+            </span>
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          <DialogContentText sx={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+            Tem certeza que deseja excluir o seguro{' '}
+            <strong style={{ color: 'var(--text-primary)' }}>
+              {seguroToDelete?.numero_apolice}
+            </strong>
+            ? Esta ação não pode ser desfeita.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button
+            onClick={handleDeleteCancel}
+            variant="outlined"
+            disabled={deleting}
+            sx={{
+              color: 'var(--text-secondary)',
+              borderColor: 'var(--border-default)',
+              textTransform: 'none',
+              fontWeight: 500,
+              '&:hover': {
+                borderColor: 'var(--text-secondary)',
+                backgroundColor: 'var(--bg-sidebar-hover)',
+              },
+            }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            variant="contained"
+            disabled={deleting}
+            sx={{
+              backgroundColor: '#ef4444',
+              textTransform: 'none',
+              fontWeight: 500,
+              '&:hover': {
+                backgroundColor: '#dc2626',
+              },
+              '&:disabled': {
+                backgroundColor: 'rgba(239, 68, 68, 0.5)',
+              },
+            }}
+          >
+            {deleting ? 'Excluindo...' : 'Excluir'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </TableContainer>
   );
 }

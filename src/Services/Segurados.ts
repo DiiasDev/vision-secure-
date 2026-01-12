@@ -26,3 +26,28 @@ export async function getSegurados(): Promise<segurado[]> {
     throw error;
   }
 }
+
+export async function atualizarSegurado(name: string, dados: Partial<segurado>) {
+  try {
+    const response = await frappe.put(`/resource/Segurados/${name}`, dados);
+    return response.data.data;
+  } catch (error: any) {
+    console.error("Erro ao atualizar Segurado:", error);
+    throw error;
+  }
+}
+
+export async function deletarSegurado(name: string) {
+  try {
+    // Usando método customizado do Frappe para forçar exclusão
+    await frappe.post('/method/frappe.client.delete', {
+      doctype: 'Segurados',
+      name: name,
+      force: 1
+    });
+    return true;
+  } catch (error: any) {
+    console.error("Erro ao deletar Segurado:", error);
+    throw error;
+  }
+}

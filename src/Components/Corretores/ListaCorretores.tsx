@@ -19,7 +19,11 @@ import { CorretorCard } from './CorretorCard';
 import { CorretoresTable } from './CorretoresTable';
 import { CorretoresFilter } from './CorretoresFilter';
 
-export default function ListaCorretores() {
+interface ListaCorretoresProps {
+  onEdit?: (corretor: corretor) => void;
+}
+
+export default function ListaCorretores({ onEdit }: ListaCorretoresProps = {}) {
   const [corretores, setCorretores] = useState<corretor[]>([]);
   const [filteredCorretores, setFilteredCorretores] = useState<corretor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -260,13 +264,13 @@ export default function ListaCorretores() {
           {viewMode === 'grid' && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {paginatedCorretores.map((corretor) => (
-                <CorretorCard key={corretor.name} corretor={corretor} />
+                <CorretorCard key={corretor.name} corretor={corretor} onEdit={onEdit} onDelete={loadCorretores} />
               ))}
             </div>
           )}
 
           {/* Table View */}
-          {viewMode === 'table' && <CorretoresTable corretores={paginatedCorretores} />}
+          {viewMode === 'table' && <CorretoresTable corretores={paginatedCorretores} onEdit={onEdit} onDelete={loadCorretores} />}
 
           {/* Pagination */}
           {totalPages > 1 && (

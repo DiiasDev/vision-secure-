@@ -255,6 +255,39 @@ const FormComponent: React.FC<FormComponentProps> = ({
               .split("\n")
               .filter(Boolean);
 
+        // Função para renderizar o valor selecionado
+        const renderValue = (selected: string) => {
+          if (!selected) return <span style={{ color: isDarkMode ? "#94a3b8" : "#6b7280", fontStyle: "italic" }}>Selecione...</span>;
+          const parts = selected.split("|");
+          return parts.length > 1 ? parts[1] : selected;
+        };
+
+        // Função para renderizar o label da opção
+        const renderOptionLabel = (opt: string) => {
+          const parts = opt.split("|");
+          if (parts.length > 1) {
+            return (
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                <span style={{ 
+                  fontSize: "0.95rem", 
+                  fontWeight: 500,
+                  color: isDarkMode ? "#f8fafc" : "#1f2937"
+                }}>
+                  {parts[1]}
+                </span>
+                <span style={{ 
+                  fontSize: "0.75rem", 
+                  color: isDarkMode ? "#94a3b8" : "#6b7280",
+                  fontFamily: "monospace"
+                }}>
+                  {parts[0]}
+                </span>
+              </div>
+            );
+          }
+          return opt;
+        };
+
         return (
           <FormControl fullWidth size="small">
             <Select
@@ -262,6 +295,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
               onChange={(e) => handleChange(field.fieldname, e.target.value)}
               displayEmpty
               required={field.required}
+              renderValue={renderValue}
               sx={{
                 color: isDarkMode ? "#f8fafc !important" : "#1f2937 !important",
                 "& .MuiSelect-select": {
@@ -272,7 +306,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 PaperProps: {
                   sx: {
                     bgcolor: isDarkMode ? "#1e293b" : "#ffffff",
-                    maxHeight: 300,
+                    maxHeight: 400,
                     boxShadow: isDarkMode
                       ? "0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3)"
                       : "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
@@ -301,10 +335,16 @@ const FormComponent: React.FC<FormComponentProps> = ({
                   value={opt}
                   sx={{
                     borderRadius: "6px",
-                    marginBottom: "2px",
+                    marginBottom: "4px",
+                    padding: "10px 12px",
+                    "&:hover": {
+                      backgroundColor: isDarkMode 
+                        ? "rgba(59, 130, 246, 0.12) !important"
+                        : "rgba(29, 78, 216, 0.06) !important",
+                    },
                   }}
                 >
-                  {opt}
+                  {renderOptionLabel(opt)}
                 </MenuItem>
               ))}
             </Select>
@@ -581,6 +621,15 @@ const FormComponent: React.FC<FormComponentProps> = ({
     return acc;
   }, {} as Record<string, Field[]>);
 
+  // Função para verificar se um campo deve ser exibido
+  const shouldShowField = (field: Field) => {
+    // Lógica específica para o campo de veículo
+    if (field.fieldname === "veiculo") {
+      return formData["tipo_seguro"] === "Auto";
+    }
+    return true;
+  };
+
   return (
     <ThemeProvider theme={muiTheme}>
       <form
@@ -608,7 +657,9 @@ const FormComponent: React.FC<FormComponentProps> = ({
                   {section}
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {sectionFields.map((field) => (
+                  {sectionFields
+                    .filter(shouldShowField)
+                    .map((field) => (
                     <div
                       key={field.fieldname}
                       className={`flex flex-col gap-2 ${
