@@ -21,7 +21,7 @@ export interface seguro {
   valor_premio: number;
   valor_franquia: number;
   forma_pagamento: "À Vista" | "Mensal" | "Trimestral" | "Semestral" | "Anual";
-  situacao_pagamento: "Pendente" | "Pago" | "Atrasado" | "Cancelado";
+  situacao_pagamento: "Pendente" | "Em Dia" | "Atrasado" | "Cancelado";
   creation?: string;
   modified?: string;
   modified_by?: string;
