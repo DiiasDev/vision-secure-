@@ -12,7 +12,8 @@ import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
 import WbSunnyOutlinedIcon from "@mui/icons-material/WbSunnyOutlined";
 import LogoutIcon from "@mui/icons-material/Logout";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
-import { logoutUser } from "../../Services/auth";
+import { logoutUser, getCorretorId } from "../../Services/auth";
+import ModalNotificacao from "../Notificacoes/ModalNotificacao";
 import "../../Styles/theme.css"
 
 type HeaderProps = {
@@ -29,7 +30,9 @@ export default function Header({
   notificationsCount = 0,
 }: HeaderProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [modalNotificacoesAberto, setModalNotificacoesAberto] = useState(false);
   const navigate = useNavigate();
+  const corretorId = getCorretorId();
 
   const openMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -75,6 +78,7 @@ export default function Header({
       <div className="flex items-center gap-1 md:gap-2">
         {/* Notificações */}
         <IconButton
+          onClick={() => setModalNotificacoesAberto(true)}
           aria-label="Notificações"
           sx={{ 
             color: "var(--text-secondary)",
@@ -206,6 +210,13 @@ export default function Header({
           </MenuItem>
         </Menu>
       </div>
+
+      {/* Modal de Notificações */}
+      <ModalNotificacao
+        open={modalNotificacoesAberto}
+        onClose={() => setModalNotificacoesAberto(false)}
+        corretorId={corretorId}
+      />
     </header>
   );
 }

@@ -23,6 +23,8 @@
   --bg-table-header: #f1f5f9;    /* Slate 100 */
   --bg-table-row: #ffffff;
   --bg-table-row-hover: #f8fafc;
+  --bg-hover: rgba(241, 245, 249, 0.8);
+  --bg-tertiary: #e2e8f0;
 
   /* Borders */
   --border-default: #e2e8f0;     /* Slate 200 */
@@ -32,6 +34,7 @@
   /* Text */
   --text-primary: #0f172a;       /* Slate 900 */
   --text-secondary: #475569;     /* Slate 600 */
+  --text-tertiary: #94a3b8;      /* Slate 400 */
   --text-muted: #64748b;         /* Slate 500 */
   --text-inverse: #ffffff;
 
@@ -92,6 +95,8 @@
   --bg-table-row: #0f172a;
   --bg-table-row-hover: #1e293b;
   --bg-secondary: #1e293b;       /* Slate 800 */
+  --bg-hover: rgba(30, 41, 59, 0.5);
+  --bg-tertiary: #334155;
 
   /* Borders */
   --border-default: #1e293b;     /* Slate 800 */
@@ -101,6 +106,7 @@
   /* Text */
   --text-primary: #f8fafc;       /* Slate 50 */
   --text-secondary: #cbd5e1;     /* Slate 300 */
+  --text-tertiary: #64748b;      /* Slate 500 */
   --text-muted: #94a3b8;         /* Slate 400 */
   --text-inverse: #020617;
 
