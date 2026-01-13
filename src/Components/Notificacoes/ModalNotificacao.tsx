@@ -177,14 +177,14 @@ export default function ModalNotificacao({
     // Filtrar por tab (admin)
     if (userIsAdmin) {
       if (tabAtiva === 1) {
-        // Seguros (vencimentos)
-        filtradas = filtradas.filter((n) => n.categoria === "Seguros");
+        // Vencimentos (tipo = Vencimento)
+        filtradas = filtradas.filter((n) => n.tipo === "Vencimento");
       } else if (tabAtiva === 2) {
-        // Aniversários
-        filtradas = filtradas.filter((n) => n.categoria === "Aniversarios");
+        // Aniversários (tipo = Aniversario)
+        filtradas = filtradas.filter((n) => n.tipo === "Aniversario");
       } else if (tabAtiva === 3) {
-        // Movimentações do sistema
-        filtradas = filtradas.filter((n) => n.categoria === "Movimentacoes");
+        // Movimentações do sistema (tipo = Movimentacao ou Cadastro)
+        filtradas = filtradas.filter((n) => n.tipo === "Movimentacao" || n.tipo === "Cadastro");
       }
     }
 
@@ -195,6 +195,16 @@ export default function ModalNotificacao({
   const contadorNaoLidas = useMemo(() => {
     return notificacoesFiltradas.filter((n) => n.lida === 0).length;
   }, [notificacoesFiltradas]);
+
+  // Contadores por categoria
+  const contadores = useMemo(() => {
+    return {
+      total: notificacoes.filter(n => n.lida === 0).length,
+      vencimentos: notificacoes.filter(n => n.tipo === "Vencimento" && n.lida === 0).length,
+      aniversarios: notificacoes.filter(n => n.tipo === "Aniversario" && n.lida === 0).length,
+      movimentacoes: notificacoes.filter(n => (n.tipo === "Movimentacao" || n.tipo === "Cadastro") && n.lida === 0).length,
+    };
+  }, [notificacoes]);
 
   return (
     <Dialog
@@ -340,10 +350,82 @@ export default function ModalNotificacao({
             },
           }}
         >
-          <Tab label="Todas" />
-          <Tab label="Seguros" />
-          <Tab label="Aniversários" />
-          <Tab label="Movimentações" />
+          <Tab 
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                Todas
+                {contadores.total > 0 && (
+                  <Chip 
+                    label={contadores.total} 
+                    size="small" 
+                    sx={{ 
+                      height: 20, 
+                      fontSize: '0.7rem',
+                      backgroundColor: 'var(--color-primary)',
+                      color: 'white'
+                    }} 
+                  />
+                )}
+              </Box>
+            }
+          />
+          <Tab 
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                Vencimentos
+                {contadores.vencimentos > 0 && (
+                  <Chip 
+                    label={contadores.vencimentos} 
+                    size="small" 
+                    sx={{ 
+                      height: 20, 
+                      fontSize: '0.7rem',
+                      backgroundColor: 'var(--color-danger)',
+                      color: 'white'
+                    }} 
+                  />
+                )}
+              </Box>
+            }
+          />
+          <Tab 
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                Aniversários
+                {contadores.aniversarios > 0 && (
+                  <Chip 
+                    label={contadores.aniversarios} 
+                    size="small" 
+                    sx={{ 
+                      height: 20, 
+                      fontSize: '0.7rem',
+                      backgroundColor: 'var(--color-info)',
+                      color: 'white'
+                    }} 
+                  />
+                )}
+              </Box>
+            }
+          />
+          <Tab 
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                Movimentações
+                {contadores.movimentacoes > 0 && (
+                  <Chip 
+                    label={contadores.movimentacoes} 
+                    size="small" 
+                    sx={{ 
+                      height: 20, 
+                      fontSize: '0.7rem',
+                      backgroundColor: 'var(--color-warning)',
+                      color: 'white'
+                    }} 
+                  />
+                )}
+              </Box>
+            }
+          />
         </Tabs>
       )}
 
@@ -384,17 +466,34 @@ export default function ModalNotificacao({
           </Box>
         ) : (
           <List sx={{ py: 0 }}>
-            {notificacoesFiltradas.map((notificacao, index) => (
+            {notificacoesFiltradas.map((notificacao, index) => {
+              // Determinar cor de fundo baseada na prioridade de vencimentos
+              const getBackgroundColor = () => {
+                if (notificacao.lida === 1) return "transparent";
+                if (notificacao.tipo === "Vencimento") {
+                  if (notificacao.prioridade === "Critica") {
+                    return "rgba(220, 38, 38, 0.15)"; // Vermelho forte (hoje/amanhã)
+                  } else if (notificacao.prioridade === "Alta") {
+                    return "rgba(251, 146, 60, 0.15)"; // Laranja (5 dias)
+                  }
+                }
+                return "var(--bg-hover)";
+              };
+
+              return (
               <Box key={notificacao.name}>
                 <ListItem
                   sx={{
                     py: 2,
                     px: 3,
-                    backgroundColor: notificacao.lida === 1
-                      ? "transparent"
-                      : "var(--bg-hover)",
+                    backgroundColor: getBackgroundColor(),
                     opacity: notificacao.lida === 1 ? 0.7 : 1,
                     transition: "all 0.2s",
+                    borderLeft: notificacao.tipo === "Vencimento" && notificacao.lida === 0 && notificacao.prioridade === "Critica"
+                      ? "4px solid var(--color-danger)"
+                      : notificacao.tipo === "Vencimento" && notificacao.lida === 0 && notificacao.prioridade === "Alta"
+                      ? "4px solid var(--color-warning)"
+                      : "none",
                     "&:hover": {
                       backgroundColor: "var(--button-secondary-hover)",
                     },
@@ -566,7 +665,8 @@ export default function ModalNotificacao({
                   <Divider sx={{ borderColor: "var(--border-default)" }} />
                 )}
               </Box>
-            ))}
+              );
+            })}
           </List>
         )}
       </DialogContent>
