@@ -4,6 +4,7 @@ import { filterDataByUser, canEdit, getCurrentCorretorForNewRecord } from "../Ut
 import { salvarAssociacaoCorretor, filtrarPorCorretorLocal } from "../Utils/corretorMapping";
 import { isAdmin, getCorretorId } from "./auth";
 
+// Funções de gerenciamento de veículos
 export async function newVehicle(dados: veiculo) {
   try {
     // Se não for admin, forçar o corretor logado
@@ -75,10 +76,35 @@ export async function getVehicle(): Promise<veiculo[]> {
 
 export async function atualizarVeiculo(name: string, dados: Partial<veiculo>) {
   try {
-    if (!canEdit(dados.corretor)) {
-      throw new Error("Você não tem permissão para editar este veículo");
-    }
+    // Permissão total - todos podem editar
     const response = await frappe.put(`/resource/Veiculos Segurados/${name}`, dados);
+    
+    // 🔔 Notificar admin sobre a edição (se não for o admin editando)
+    try {
+      const usuarioLogado = localStorage.getItem("userName") || "Sistema";
+      const isAdminUser = localStorage.getItem("isAdmin") === "true";
+      const placaVeiculo = dados.placa || name;
+      
+      if (!isAdminUser) {
+        const { NotificacoesService } = await import("./Notificacoes");
+        const notificacoesService = new NotificacoesService();
+        await notificacoesService.criar({
+          destinatario: "Administrator",
+          titulo: "Veículo Editado",
+          descricao: `${usuarioLogado} editou o veículo ${placaVeiculo}`,
+          categoria: "Movimentacoes",
+          tipo: "Movimentacao",
+          prioridade: "Baixa",
+          referencia_doctype: "Veiculos Segurados",
+          referencia_name: name,
+          icone: "✏️"
+        });
+        console.log("✅ Notificação de edição enviada ao admin");
+      }
+    } catch (notifError) {
+      console.error("⚠️ Erro ao criar notificação:", notifError);
+    }
+    
     return response.data.data;
   } catch (error: any) {
     console.error("Erro ao atualizar veículo:", error);
@@ -88,20 +114,45 @@ export async function atualizarVeiculo(name: string, dados: Partial<veiculo>) {
 
 export async function deletarVeiculo(name: string) {
   try {
-    // Buscar o veículo primeiro para verificar permissão
-    const veiculo = await frappe.get(`/resource/Veiculos Segurados/${name}`);
-    const veiculoData = veiculo.data?.data;
-    
-    if (!canEdit(veiculoData?.corretor)) {
-      throw new Error("Você não tem permissão para deletar este veículo");
+    // Buscar placa antes de deletar
+    let placaVeiculo = name;
+    try {
+      const veiculo = await frappe.get(`/resource/Veiculos Segurados/${name}`);
+      placaVeiculo = veiculo.data?.data?.placa || name;
+    } catch (err) {
+      console.warn("⚠️ Não foi possível buscar placa do veículo");
     }
     
-    // Usando método customizado do Frappe para forçar exclusão
+    // Permissão total - todos podem deletar
     await frappe.post('/method/frappe.client.delete', {
       doctype: 'Veiculos',
       name: name,
       force: 1
     });
+    
+    // 🔔 Notificar admin sobre exclusão (se não for o admin deletando)
+    try {
+      const usuarioLogado = localStorage.getItem("userName") || "Sistema";
+      const isAdminUser = localStorage.getItem("isAdmin") === "true";
+      
+      if (!isAdminUser) {
+        const { NotificacoesService } = await import("./Notificacoes");
+        const notificacoesService = new NotificacoesService();
+        await notificacoesService.criar({
+          destinatario: "Administrator",
+          titulo: "Veículo Excluído",
+          descricao: `${usuarioLogado} excluiu o veículo ${placaVeiculo}`,
+          categoria: "Movimentacoes",
+          tipo: "Movimentacao",
+          prioridade: "Normal",
+          icone: "🗑️"
+        });
+        console.log("✅ Notificação de exclusão enviada ao admin");
+      }
+    } catch (notifError) {
+      console.error("⚠️ Erro ao criar notificação:", notifError);
+    }
+    
     return true;
   } catch (error: any) {
     console.error("Erro ao deletar Veiculo:", error);

@@ -6,7 +6,7 @@ const API_KEY = import.meta.env.VITE_API_KEY;
 const API_SECRET = import.meta.env.VITE_API_SECRET;
 
 export const frappe = axios.create({
-  baseURL: `${API_URL}/api`,
+  baseURL: `${API_URL}/api`, // Com /api no final para todos os endpoints
   headers: {
     "Content-Type": "application/json",
     Authorization: `token ${API_KEY}:${API_SECRET}`,
@@ -28,7 +28,7 @@ frappe.interceptors.response.use(
 // Verifica se o backend está online
 export async function verificarStatusBackend(): Promise<boolean> {
   try {
-    await frappe.get("/method/ping");
+    await frappe.get("/api/method/ping");
     return true;
   } catch (error) {
     return false;

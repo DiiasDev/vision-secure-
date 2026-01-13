@@ -7,6 +7,7 @@ import { getVehicle } from "./veiculos";
 import { filterDataByUser, canEdit, getCurrentCorretorForNewRecord } from "../Utils/permissions";
 import { salvarAssociacaoCorretor, filtrarPorCorretorLocal } from "../Utils/corretorMapping";
 import { isAdmin, getCorretorId } from "./auth";
+import { NotificacoesService } from "./Notificacoes";
 
 export async function newSeguro(dados: seguro) {
   try {
@@ -61,6 +62,47 @@ export async function newSeguro(dados: seguro) {
       salvarAssociacaoCorretor('seguro', novoSeguro.name, corretorAtual);
     }
     
+    // 🔔 Criar notificação sobre novo seguro
+    try {
+      const usuarioLogado = localStorage.getItem("userName") || "Sistema";
+      
+      // Buscar dados do segurado e veículo para a notificação
+      let descricao = `${usuarioLogado} cadastrou um novo seguro`;
+      
+      if (dadosLimpos.segurado) {
+        try {
+          const seguradoResp = await frappe.get(`/resource/Segurados/${dadosLimpos.segurado}`);
+          const nomeSegurado = seguradoResp.data?.data?.nome_completo;
+          if (nomeSegurado) {
+            descricao = `${usuarioLogado} cadastrou um novo seguro para ${nomeSegurado}`;
+          }
+        } catch (e) {
+          console.warn("⚠️ Não foi possível buscar nome do segurado");
+        }
+      }
+      
+      if (dadosLimpos.placa_veiculo) {
+        descricao += ` - Veículo: ${dadosLimpos.placa_veiculo}`;
+      }
+      
+      const notificacoesService = new NotificacoesService();
+      await notificacoesService.criar({
+        destinatario: "Administrator",
+        titulo: "Novo Seguro Cadastrado",
+        descricao,
+        categoria: "Seguros",
+        tipo: "Cadastro",
+        prioridade: "Normal",
+        referencia_doctype: "Seguros",
+        referencia_name: novoSeguro.name,
+        icone: "🛡️"
+      });
+      
+      console.log("✅ Notificação de novo seguro criada");
+    } catch (notifError) {
+      console.error("⚠️ Erro ao criar notificação de seguro:", notifError);
+    }
+    
     return novoSeguro;
   } catch (error: any) {
     console.error("❌ Erro ao cadastrar novo Seguro:", error);
@@ -77,10 +119,41 @@ export async function newSeguro(dados: seguro) {
 
 export async function atualizarSeguro(name: string, dados: Partial<seguro>) {
   try {
-    if (!canEdit(dados.corretor_responsavel)) {
-      throw new Error("Você não tem permissão para editar este seguro");
-    }
+    // Permissão total - todos podem editar
     const response = await frappe.put(`/resource/Seguros/${name}`, dados);
+    
+    // 🔔 Notificar admin e verificar vencimento
+    try {
+      const usuarioLogado = localStorage.getItem("userName") || "Sistema";
+      const isAdminUser = localStorage.getItem("isAdmin") === "true";
+      const placaVeiculo = dados.veiculo_placa || dados.veiculo || "Seguro";
+      
+      // Notificar admin se um corretor editou
+      if (!isAdminUser) {
+        const notificacoesService = new NotificacoesService();
+        await notificacoesService.criar({
+          destinatario: "Administrator",
+          titulo: "Seguro Editado",
+          descricao: `${usuarioLogado} editou o seguro do veículo ${placaVeiculo}`,
+          categoria: "Movimentacoes",
+          tipo: "Movimentacao",
+          prioridade: "Baixa",
+          referencia_doctype: "Seguros",
+          referencia_name: name,
+          icone: "✏️"
+        });
+        console.log("✅ Notificação de edição enviada ao admin");
+      }
+      
+      // Verificar se data de vencimento foi alterada e se está próxima
+      if (dados.fim_vigencia) {
+        const { verificarVencimentoSeguro } = await import("../Utils/NotificacoesHelper");
+        await verificarVencimentoSeguro(name, dados.fim_vigencia, placaVeiculo);
+      }
+    } catch (notifError) {
+      console.error("⚠️ Erro ao criar notificação:", notifError);
+    }
+    
     return response.data.data;
   } catch (error: any) {
     console.error("Erro ao atualizar seguro:", error);
@@ -90,20 +163,45 @@ export async function atualizarSeguro(name: string, dados: Partial<seguro>) {
 
 export async function deletarSeguro(name: string) {
   try {
-    // Buscar o seguro primeiro para verificar permissão
-    const seguro = await frappe.get(`/resource/Seguros/${name}`);
-    const seguroData = seguro.data?.data;
-    
-    if (!canEdit(seguroData?.corretor_responsavel)) {
-      throw new Error("Você não tem permissão para deletar este seguro");
+    // Buscar placa do veículo antes de deletar
+    let placaVeiculo = name;
+    try {
+      const seguro = await frappe.get(`/resource/Seguros/${name}`);
+      placaVeiculo = seguro.data?.data?.veiculo_placa || seguro.data?.data?.veiculo || name;
+    } catch (err) {
+      console.warn("⚠️ Não foi possível buscar placa do veículo");
     }
     
-    // Usando método customizado do Frappe para forçar exclusão
+    // Permissão total - todos podem deletar
     await frappe.post('/method/frappe.client.delete', {
       doctype: 'Seguros',
       name: name,
       force: 1
     });
+    
+    // 🔔 Notificar admin sobre exclusão (se não for o admin deletando)
+    try {
+      const usuarioLogado = localStorage.getItem("userName") || "Sistema";
+      const isAdminUser = localStorage.getItem("isAdmin") === "true";
+      
+      if (!isAdminUser) {
+        const notificacoesService = new NotificacoesService();
+        await notificacoesService.criar({
+          destinatario: "Administrator",
+          titulo: "Seguro Excluído",
+          descricao: `${usuarioLogado} excluiu o seguro do veículo ${placaVeiculo}`,
+          categoria: "Movimentacoes",
+          tipo: "Movimentacao",
+          prioridade: "Normal",
+          referencia_doctype: "Seguros",
+          icone: "🗑️"
+        });
+        console.log("✅ Notificação de exclusão enviada ao admin");
+      }
+    } catch (notifError) {
+      console.error("⚠️ Erro ao criar notificação:", notifError);
+    }
+    
     return true;
   } catch (error: any) {
     console.error("Erro ao deletar Seguro:", error);

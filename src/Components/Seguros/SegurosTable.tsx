@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
   Table,
   TableBody,
@@ -465,9 +465,8 @@ export function SegurosTable({ seguros, onEdit, onDelete }: SegurosTableProps) {
             const vencimentoStatus = getVencimentoStatus(seguro.fim_vigencia, seguro.situacao_pagamento);
 
             return (
-              <>
+              <React.Fragment key={seguro.name}>
                 <TableRow
-                  key={seguro.name}
                   sx={{
                     backgroundColor: 'var(--bg-table-row)',
                     '&:hover': {
@@ -917,7 +916,7 @@ export function SegurosTable({ seguros, onEdit, onDelete }: SegurosTableProps) {
                     </Collapse>
                   </TableCell>
                 </TableRow>
-              </>
+              </React.Fragment>
             );
           })}
         </TableBody>

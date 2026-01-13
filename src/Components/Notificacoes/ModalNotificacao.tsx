@@ -15,6 +15,8 @@ import {
   Chip,
   Divider,
   Tooltip,
+  CircularProgress,
+  Button,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import CakeIcon from "@mui/icons-material/Cake";
@@ -24,132 +26,51 @@ import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import DriveFileRenameOutlineIcon from "@mui/icons-material/DriveFileRenameOutline";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import DoneAllIcon from "@mui/icons-material/DoneAll";
+import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import { useState, useMemo } from "react";
 import { isAdmin } from "../../Services/auth";
-
-type NotificationType =
-  | "seguro-vencer"
-  | "aniversario"
-  | "novo-cadastro"
-  | "edicao"
-  | "exclusao"
-  | "info";
-
-type Notificacao = {
-  id: string;
-  tipo: NotificationType;
-  titulo: string;
-  descricao: string;
-  data: Date;
-  lida: boolean;
-  corretorId?: string;
-  corretorNome?: string;
-};
+import { useNotificacoes } from "../../hooks/useNotificacoes";
+import { limparTodasNotificacoes } from "../../Utils/limparNotificacoesDuplicadas";
 
 type ModalNotificacaoProps = {
   open: boolean;
   onClose: () => void;
   corretorId?: string | null;
+  onMarcarComoLida?: (id: string) => Promise<void>;
 };
 
-// Dados mockados - substituir por dados reais depois
-const notificacoesMockadas: Notificacao[] = [
-  {
-    id: "1",
-    tipo: "seguro-vencer",
-    titulo: "Seguro a vencer",
-    descricao: "Seguro do veículo ABC-1234 vence em 7 dias",
-    data: new Date(2026, 0, 10),
-    lida: false,
-    corretorId: "COR-001",
-    corretorNome: "João Silva",
-  },
-  {
-    id: "2",
-    tipo: "aniversario",
-    titulo: "Aniversário de cliente",
-    descricao: "Maria Santos faz aniversário amanhã",
-    data: new Date(2026, 0, 11),
-    lida: false,
-    corretorId: "COR-001",
-    corretorNome: "João Silva",
-  },
-  {
-    id: "3",
-    tipo: "seguro-vencer",
-    titulo: "Seguro a vencer",
-    descricao: "Seguro do veículo XYZ-5678 vence em 3 dias",
-    data: new Date(2026, 0, 12),
-    lida: false,
-    corretorId: "COR-002",
-    corretorNome: "Pedro Oliveira",
-  },
-  {
-    id: "4",
-    tipo: "novo-cadastro",
-    titulo: "Novo segurado cadastrado",
-    descricao: "Pedro Oliveira cadastrou um novo segurado",
-    data: new Date(2026, 0, 12, 10, 30),
-    lida: false,
-    corretorId: "COR-002",
-    corretorNome: "Pedro Oliveira",
-  },
-  {
-    id: "5",
-    tipo: "edicao",
-    titulo: "Seguro atualizado",
-    descricao: "João Silva atualizou dados de um seguro",
-    data: new Date(2026, 0, 12, 14, 15),
-    lida: false,
-    corretorId: "COR-001",
-    corretorNome: "João Silva",
-  },
-  {
-    id: "6",
-    tipo: "aniversario",
-    titulo: "Aniversário de cliente",
-    descricao: "Carlos Mendes faz aniversário em 3 dias",
-    data: new Date(2026, 0, 11),
-    lida: true,
-    corretorId: "COR-002",
-    corretorNome: "Pedro Oliveira",
-  },
-  {
-    id: "7",
-    tipo: "exclusao",
-    titulo: "Veículo removido",
-    descricao: "João Silva removeu um veículo do sistema",
-    data: new Date(2026, 0, 11, 16, 45),
-    lida: true,
-    corretorId: "COR-001",
-    corretorNome: "João Silva",
-  },
-];
-
-const getNotificationIcon = (tipo: NotificationType) => {
-  switch (tipo) {
-    case "seguro-vencer":
+const getNotificationIcon = (categoria: string, tipo: string) => {
+  // Priorizar categoria
+  switch (categoria) {
+    case "Seguros":
       return <WarningAmberIcon sx={{ color: "var(--color-warning)" }} />;
-    case "aniversario":
+    case "Aniversarios":
       return <CakeIcon sx={{ color: "var(--color-info)" }} />;
-    case "novo-cadastro":
-      return <PersonAddIcon sx={{ color: "var(--color-success)" }} />;
-    case "edicao":
-      return <DriveFileRenameOutlineIcon sx={{ color: "var(--color-info)" }} />;
-    case "exclusao":
+    case "Movimentacoes":
+      // Subcategorias de movimentação
+      if (tipo === "Cadastro") {
+        return <PersonAddIcon sx={{ color: "var(--color-success)" }} />;
+      } else if (tipo === "Movimentacao") {
+        return <DriveFileRenameOutlineIcon sx={{ color: "var(--color-info)" }} />;
+      }
       return <DeleteIcon sx={{ color: "var(--color-danger)" }} />;
+    case "Geral":
     default:
       return <InfoIcon sx={{ color: "var(--color-primary)" }} />;
   }
 };
 
-const formatarData = (data: Date): string => {
+const formatarData = (dataString: string): string => {
+  const data = new Date(dataString);
   const agora = new Date();
   const diff = agora.getTime() - data.getTime();
   const minutos = Math.floor(diff / 60000);
   const horas = Math.floor(diff / 3600000);
   const dias = Math.floor(diff / 86400000);
 
+  if (minutos < 1) return "Agora";
   if (minutos < 60) return `${minutos}m atrás`;
   if (horas < 24) return `${horas}h atrás`;
   if (dias === 0) return "Hoje";
@@ -161,47 +82,118 @@ const formatarData = (data: Date): string => {
 export default function ModalNotificacao({
   open,
   onClose,
-  corretorId,
+  onMarcarComoLida,
 }: ModalNotificacaoProps) {
   const [tabAtiva, setTabAtiva] = useState(0);
-  const [notificacoes, setNotificacoes] = useState<Notificacao[]>(notificacoesMockadas);
+  const [verificando, setVerificando] = useState(false);
   const userIsAdmin = isAdmin();
+  const { notificacoes, loading, carregar, marcarComoLida: hookMarcarComoLida, marcarTodasComoLidas, excluir, verificarManualmente } = useNotificacoes();
 
-  const marcarComoLida = (id: string) => {
-    setNotificacoes((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, lida: true } : n))
+  const marcarComoLida = async (id: string) => {
+    try {
+      console.log("🔔 [MODAL] Iniciando marcar como lida:", id);
+      if (onMarcarComoLida) {
+        console.log("🔔 [MODAL] Usando callback onMarcarComoLida");
+        await onMarcarComoLida(id);
+      } else {
+        console.log("🔔 [MODAL] Usando hookMarcarComoLida");
+        await hookMarcarComoLida(id);
+      }
+      console.log("🔔 [MODAL] Recarregando lista...");
+      await carregar(); // Recarregar lista após marcar
+      console.log("✅ [MODAL] Notificação marcada com sucesso e lista recarregada");
+    } catch (error: any) {
+      console.error("❌ [MODAL] Erro ao marcar notificação:", error);
+      console.error("❌ [MODAL] Stack:", error.stack);
+    }
+  };
+
+  const handleMarcarTodasComoLidas = async () => {
+    try {
+      console.log("🔔 [MODAL] Iniciando marcar todas como lidas...");
+      const total = await marcarTodasComoLidas();
+      console.log(`🔔 [MODAL] ${total} notificações marcadas`);
+      console.log("🔔 [MODAL] Recarregando lista...");
+      await carregar(); // Recarregar lista após marcar
+      console.log("✅ [MODAL] Lista recarregada com sucesso");
+    } catch (error: any) {
+      console.error("❌ [MODAL] Erro ao marcar todas:", error);
+      console.error("❌ [MODAL] Stack:", error.stack);
+    }
+  };
+
+  const handleVerificarManualmente = async () => {
+    setVerificando(true);
+    try {
+      console.log("🔍 Iniciando verificação manual...");
+      await verificarManualmente();
+      alert("✅ Verificação concluída! Aniversários e vencimentos foram verificados.");
+    } catch (error) {
+      console.error("❌ Erro na verificação:", error);
+      alert("❌ Erro ao verificar. Veja o console para detalhes.");
+    } finally {
+      setVerificando(false);
+    }
+  };
+
+  const handleExcluir = async (id: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (window.confirm("Deseja realmente excluir esta notificação?")) {
+      await excluir(id);
+    }
+  };
+
+  const handleLimparTodas = async () => {
+    const confirmacao1 = window.confirm(
+      "⚠️ ATENÇÃO!\n\nDeseja excluir TODAS as notificações?\n\nEsta ação NÃO PODE ser desfeita!"
     );
+    
+    if (!confirmacao1) return;
+    
+    const confirmacao2 = window.confirm(
+      "Tem CERTEZA ABSOLUTA?\n\nTodas as " + notificacoes.length + " notificações serão excluídas permanentemente!"
+    );
+    
+    if (!confirmacao2) return;
+    
+    try {
+      console.log("🗑️ Iniciando limpeza total...");
+      const total = await limparTodasNotificacoes();
+      alert(`✅ ${total} notificações foram excluídas com sucesso!`);
+      await carregar();
+    } catch (error) {
+      console.error("Erro ao limpar:", error);
+      alert("❌ Erro ao limpar notificações. Verifique o console.");
+    }
   };
 
   // Filtrar notificações
   const notificacoesFiltradas = useMemo(() => {
-    if (!userIsAdmin) {
-      // Corretor vê apenas suas notificações
-      return notificacoes.filter((n) => n.corretorId === corretorId);
+    let filtradas = notificacoes;
+
+    // Se não for admin, filtrar por corretor (se necessário)
+    // Por enquanto, o backend já filtra pelo usuário logado
+
+    // Filtrar por tab (admin)
+    if (userIsAdmin) {
+      if (tabAtiva === 1) {
+        // Seguros (vencimentos)
+        filtradas = filtradas.filter((n) => n.categoria === "Seguros");
+      } else if (tabAtiva === 2) {
+        // Aniversários
+        filtradas = filtradas.filter((n) => n.categoria === "Aniversarios");
+      } else if (tabAtiva === 3) {
+        // Movimentações do sistema
+        filtradas = filtradas.filter((n) => n.categoria === "Movimentacoes");
+      }
     }
 
-    // Admin vê todas, mas pode filtrar por tab
-    if (tabAtiva === 0) {
-      // Todas as notificações
-      return notificacoes;
-    } else if (tabAtiva === 1) {
-      // Seguros a vencer
-      return notificacoes.filter((n) => n.tipo === "seguro-vencer");
-    } else if (tabAtiva === 2) {
-      // Aniversários
-      return notificacoes.filter((n) => n.tipo === "aniversario");
-    } else if (tabAtiva === 3) {
-      // Movimentações do sistema
-      return notificacoes.filter((n) =>
-        ["novo-cadastro", "edicao", "exclusao"].includes(n.tipo)
-      );
-    }
-    return notificacoes;
-  }, [userIsAdmin, corretorId, tabAtiva, notificacoes]);
+    return filtradas;
+  }, [userIsAdmin, tabAtiva, notificacoes]);
 
   // Contador de notificações não lidas
   const contadorNaoLidas = useMemo(() => {
-    return notificacoesFiltradas.filter((n) => !n.lida).length;
+    return notificacoesFiltradas.filter((n) => n.lida === 0).length;
   }, [notificacoesFiltradas]);
 
   return (
@@ -247,19 +239,79 @@ export default function ModalNotificacao({
             />
           )}
         </Box>
-        <IconButton
-          onClick={onClose}
-          size="small"
-          sx={{
-            color: "var(--text-secondary)",
-            "&:hover": {
-              backgroundColor: "var(--button-secondary-hover)",
-              color: "var(--text-primary)",
-            },
-          }}
-        >
-          <CloseIcon />
-        </IconButton>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          {userIsAdmin && (
+            <Tooltip title="Verificar aniversários e vencimentos" arrow>
+              <Button
+                size="small"
+                startIcon={verificando ? <CircularProgress size={16} /> : <RefreshIcon />}
+                onClick={handleVerificarManualmente}
+                disabled={verificando}
+                sx={{
+                  color: "var(--color-info)",
+                  textTransform: "none",
+                  fontSize: "0.85rem",
+                  "&:hover": {
+                    backgroundColor: "rgba(59, 130, 246, 0.1)",
+                  },
+                }}
+              >
+                {verificando ? "Verificando..." : "Verificar"}
+              </Button>
+            </Tooltip>
+          )}
+          {userIsAdmin && notificacoesFiltradas.length > 0 && (
+            <Tooltip title="Excluir todas as notificações" arrow>
+              <Button
+                size="small"
+                startIcon={<DeleteSweepIcon />}
+                onClick={handleLimparTodas}
+                sx={{
+                  color: "var(--color-danger)",
+                  textTransform: "none",
+                  fontSize: "0.85rem",
+                  "&:hover": {
+                    backgroundColor: "rgba(220, 38, 38, 0.1)",
+                  },
+                }}
+              >
+                Limpar Tudo
+              </Button>
+            </Tooltip>
+          )}
+          {contadorNaoLidas > 0 && (
+            <Tooltip title="Marcar todas como lidas" arrow>
+              <Button
+                size="small"
+                startIcon={<DoneAllIcon />}
+                onClick={handleMarcarTodasComoLidas}
+                sx={{
+                  color: "var(--color-success)",
+                  textTransform: "none",
+                  fontSize: "0.85rem",
+                  "&:hover": {
+                    backgroundColor: "rgba(34, 197, 94, 0.1)",
+                  },
+                }}
+              >
+                Marcar todas
+              </Button>
+            </Tooltip>
+          )}
+          <IconButton
+            onClick={onClose}
+            size="small"
+            sx={{
+              color: "var(--text-secondary)",
+              "&:hover": {
+                backgroundColor: "var(--button-secondary-hover)",
+                color: "var(--text-primary)",
+              },
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </Box>
       </DialogTitle>
 
       {/* Tabs para Admin */}
@@ -296,7 +348,23 @@ export default function ModalNotificacao({
       )}
 
       <DialogContent sx={{ p: 0 }}>
-        {notificacoesFiltradas.length === 0 ? (
+        {loading ? (
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              py: 8,
+              gap: 2,
+            }}
+          >
+            <CircularProgress size={48} sx={{ color: "var(--color-primary)" }} />
+            <Typography color="var(--text-secondary)" fontSize="0.95rem">
+              Carregando notificações...
+            </Typography>
+          </Box>
+        ) : notificacoesFiltradas.length === 0 ? (
           <Box
             sx={{
               display: "flex",
@@ -317,44 +385,64 @@ export default function ModalNotificacao({
         ) : (
           <List sx={{ py: 0 }}>
             {notificacoesFiltradas.map((notificacao, index) => (
-              <Box key={notificacao.id}>
+              <Box key={notificacao.name}>
                 <ListItem
                   sx={{
                     py: 2,
                     px: 3,
-                    backgroundColor: notificacao.lida
+                    backgroundColor: notificacao.lida === 1
                       ? "transparent"
                       : "var(--bg-hover)",
-                    opacity: notificacao.lida ? 0.7 : 1,
+                    opacity: notificacao.lida === 1 ? 0.7 : 1,
                     transition: "all 0.2s",
                     "&:hover": {
                       backgroundColor: "var(--button-secondary-hover)",
                     },
                   }}
                   secondaryAction={
-                    !notificacao.lida && (
-                      <Tooltip title="Marcar como lida" arrow>
+                    <Box sx={{ display: "flex", gap: 0.5 }}>
+                      {notificacao.lida === 0 && (
+                        <Tooltip title="Marcar como lida" arrow>
+                          <IconButton
+                            edge="end"
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              marcarComoLida(notificacao.name);
+                            }}
+                            sx={{
+                              color: "var(--text-secondary)",
+                              transition: "all 0.2s",
+                              "&:hover": {
+                                color: "var(--color-success)",
+                                backgroundColor: "rgba(34, 197, 94, 0.1)",
+                                transform: "scale(1.1)",
+                              },
+                            }}
+                          >
+                            <CheckCircleOutlineIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                      <Tooltip title="Excluir notificação" arrow>
                         <IconButton
                           edge="end"
                           size="small"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            marcarComoLida(notificacao.id);
-                          }}
+                          onClick={(e) => handleExcluir(notificacao.name, e)}
                           sx={{
                             color: "var(--text-secondary)",
                             transition: "all 0.2s",
                             "&:hover": {
-                              color: "var(--color-success)",
-                              backgroundColor: "rgba(34, 197, 94, 0.1)",
+                              color: "var(--color-danger)",
+                              backgroundColor: "rgba(220, 38, 38, 0.1)",
                               transform: "scale(1.1)",
                             },
                           }}
                         >
-                          <CheckCircleOutlineIcon fontSize="small" />
+                          <DeleteIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
-                    )
+                    </Box>
                   }
                 >
                   <ListItemAvatar>
@@ -364,7 +452,7 @@ export default function ModalNotificacao({
                         border: "2px solid var(--border-default)",
                       }}
                     >
-                      {getNotificationIcon(notificacao.tipo)}
+                      {getNotificationIcon(notificacao.categoria, notificacao.tipo)}
                     </Avatar>
                   </ListItemAvatar>
                   <ListItemText
@@ -378,13 +466,13 @@ export default function ModalNotificacao({
                         }}
                       >
                         <Typography
-                          fontWeight={notificacao.lida ? 500 : 700}
+                          fontWeight={notificacao.lida === 1 ? 500 : 700}
                           fontSize="0.95rem"
                           color="var(--text-primary)"
                         >
                           {notificacao.titulo}
                         </Typography>
-                        {!notificacao.lida && (
+                        {notificacao.lida === 0 && (
                           <Box
                             sx={{
                               width: 8,
@@ -418,9 +506,9 @@ export default function ModalNotificacao({
                             fontSize="0.75rem"
                             color="var(--text-tertiary)"
                           >
-                            {formatarData(notificacao.data)}
+                            {formatarData(notificacao.creation)}
                           </Typography>
-                          {userIsAdmin && notificacao.corretorNome && (
+                          {userIsAdmin && notificacao.criado_por_usuario && (
                             <>
                               <Typography
                                 fontSize="0.75rem"
@@ -429,13 +517,42 @@ export default function ModalNotificacao({
                                 •
                               </Typography>
                               <Chip
-                                label={notificacao.corretorNome}
+                                label={notificacao.criado_por_usuario}
                                 size="small"
                                 sx={{
                                   height: 20,
                                   fontSize: "0.7rem",
                                   backgroundColor: "var(--bg-tertiary)",
                                   color: "var(--text-secondary)",
+                                }}
+                              />
+                            </>
+                          )}
+                          {notificacao.prioridade && notificacao.prioridade !== "Normal" && notificacao.prioridade !== "Baixa" && (
+                            <>
+                              <Typography
+                                fontSize="0.75rem"
+                                color="var(--text-tertiary)"
+                              >
+                                •
+                              </Typography>
+                              <Chip
+                                label={notificacao.prioridade}
+                                size="small"
+                                sx={{
+                                  height: 20,
+                                  fontSize: "0.7rem",
+                                  backgroundColor: 
+                                    notificacao.prioridade === "Critica" 
+                                      ? "rgba(220, 38, 38, 0.2)"
+                                      : notificacao.prioridade === "Alta"
+                                      ? "rgba(220, 38, 38, 0.15)"
+                                      : "rgba(234, 179, 8, 0.15)",
+                                  color: 
+                                    notificacao.prioridade === "Critica" || notificacao.prioridade === "Alta"
+                                      ? "var(--color-danger)"
+                                      : "var(--color-warning)",
+                                  fontWeight: 600,
                                 }}
                               />
                             </>

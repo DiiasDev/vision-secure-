@@ -34,6 +34,11 @@ export const getCorretorId = (): string | null => {
   return localStorage.getItem("corretorId");
 };
 
+// Obter email do usuário logado
+export const getLoggedUserEmail = (): string | null => {
+  return localStorage.getItem("userEmail");
+};
+
 // Fazer login
 export const authenticateUser = async (
   username: string,
@@ -44,6 +49,7 @@ export const authenticateUser = async (
     if (username === DEFAULT_ADMIN.username && password === DEFAULT_ADMIN.password) {
       localStorage.setItem("isAuthenticated", "true");
       localStorage.setItem("userName", DEFAULT_ADMIN.displayName);
+      localStorage.setItem("userEmail", "admin@corretoraasha.com"); // Email padrão do admin
       localStorage.setItem("isAdmin", "true");
       localStorage.removeItem("corretorId");
       console.log("✅ Login realizado como Administrador");
@@ -82,6 +88,7 @@ export const authenticateUser = async (
         if (password === DEFAULT_CORRETOR_PASSWORD) {
           localStorage.setItem("isAuthenticated", "true");
           localStorage.setItem("userName", corretor.nome_completo);
+          localStorage.setItem("userEmail", corretor.email_principal || `${corretor.name}@corretoraasha.com`);
           localStorage.setItem("isAdmin", "false");
           localStorage.setItem("corretorId", corretor.name || "");
           console.log(`✅ Login realizado como Corretor: ${corretor.nome_completo}`);

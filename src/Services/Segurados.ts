@@ -2,6 +2,7 @@ import { frappe } from "./frappeClient";
 import type { segurado } from "../Types/segurados.types";
 import { filterDataByUser, canEdit, getCurrentCorretorForNewRecord, isAdmin, getCorretorId } from "../Utils/permissions";
 import { salvarAssociacaoCorretor, filtrarPorCorretorLocal } from "../Utils/corretorMapping";
+import { NotificacoesService } from "./Notificacoes";
 
 export async function criarSegurado(dados: segurado) {
   try {
@@ -27,6 +28,34 @@ export async function criarSegurado(dados: segurado) {
     if (corretorId && data.data?.name) {
       salvarAssociacaoCorretor("segurado", data.data.name, corretorId);
     }
+    
+    // 🔔 Notificação desativada - as verificações automáticas já cuidam disso
+    // try {
+    //   const nomeSegurado = dados.nome_segurado || dados.nome_completo || "Novo segurado";
+    //   const usuarioLogado = localStorage.getItem("userName") || "Sistema";
+    //   console.log("🔔 Preparando notificação para admin sobre:", nomeSegurado, "criado por:", usuarioLogado);
+    //   
+    //   const notificacoesService = new NotificacoesService();
+    //   
+    //   const resultNotif = await notificacoesService.criar({
+    //     destinatario: "Administrator",
+    //     titulo: "Novo Segurado Cadastrado",
+    //     descricao: `${usuarioLogado} cadastrou um novo segurado: ${nomeSegurado}`,
+    //     categoria: "Seguros",
+    //     tipo: "Cadastro",
+    //     prioridade: "Normal",
+    //     referencia_doctype: "Segurados",
+    //     referencia_name: data.data?.name,
+    //     icone: "👤"
+    //   });
+    //   
+    //   console.log("✅ Notificação de novo segurado criada:", resultNotif);
+    // } catch (notifError: any) {
+    //   console.error("⚠️ Erro ao criar notificação:", notifError);
+    //   console.error("⚠️ Stack:", notifError.stack);
+    //   console.error("⚠️ Response:", notifError.response?.data);
+    //   // Não falhar o cadastro se a notificação falhar
+    // }
     
     return data.data;
   } catch (error: any) {
@@ -84,10 +113,41 @@ export async function getSegurados(): Promise<segurado[]> {
 
 export async function atualizarSegurado(name: string, dados: Partial<segurado>) {
   try {
-    if (!canEdit(dados.corretor)) {
-      throw new Error("Você não tem permissão para editar este segurado");
-    }
+    // Permissão total - todos podem editar
     const response = await frappe.put(`/resource/Segurados/${name}`, dados);
+    
+    // 🔔 Notificar admin sobre a edição (se não for o admin editando)
+    try {
+      const usuarioLogado = localStorage.getItem("userName") || "Sistema";
+      const isAdminUser = localStorage.getItem("isAdmin") === "true";
+      const nomeSegurado = dados.nome_completo || name;
+      
+      // Notificar admin se um corretor editou
+      if (!isAdminUser) {
+        const notificacoesService = new NotificacoesService();
+        await notificacoesService.criar({
+          destinatario: "Administrator",
+          titulo: "Segurado Editado",
+          descricao: `${usuarioLogado} editou os dados de ${nomeSegurado}`,
+          categoria: "Movimentacoes",
+          tipo: "Movimentacao",
+          prioridade: "Baixa",
+          referencia_doctype: "Segurados",
+          referencia_name: name,
+          icone: "✏️"
+        });
+        console.log("✅ Notificação de edição enviada ao admin");
+      }
+      
+      // Verificar se data de aniversário foi alterada e se está próxima
+      if (dados.data_nascimento) {
+        const { verificarAniversarioSegurado } = await import("../Utils/NotificacoesHelper");
+        await verificarAniversarioSegurado(name, dados.data_nascimento, nomeSegurado);
+      }
+    } catch (notifError) {
+      console.error("⚠️ Erro ao criar notificação:", notifError);
+    }
+    
     return response.data.data;
   } catch (error: any) {
     console.error("Erro ao atualizar Segurado:", error);
@@ -97,20 +157,44 @@ export async function atualizarSegurado(name: string, dados: Partial<segurado>) 
 
 export async function deletarSegurado(name: string) {
   try {
-    // Buscar o segurado primeiro para verificar permissão
-    const segurados = await frappe.get(`/resource/Segurados/${name}`);
-    const segurado = segurados.data?.data;
-    
-    if (!canEdit(segurado?.corretor)) {
-      throw new Error("Você não tem permissão para deletar este segurado");
+    // Buscar nome do segurado antes de deletar
+    let nomeSegurado = name;
+    try {
+      const segurado = await frappe.get(`/resource/Segurados/${name}`);
+      nomeSegurado = segurado.data?.data?.nome_completo || name;
+    } catch (err) {
+      console.warn("⚠️ Não foi possível buscar nome do segurado");
     }
     
-    // Usando método customizado do Frappe para forçar exclusão
+    // Permissão total - todos podem deletar
     await frappe.post('/method/frappe.client.delete', {
       doctype: 'Segurados',
       name: name,
       force: 1
     });
+    
+    // 🔔 Notificar admin sobre exclusão (se não for o admin deletando)
+    try {
+      const usuarioLogado = localStorage.getItem("userName") || "Sistema";
+      const isAdminUser = localStorage.getItem("isAdmin") === "true";
+      
+      if (!isAdminUser) {
+        const notificacoesService = new NotificacoesService();
+        await notificacoesService.criar({
+          destinatario: "Administrator",
+          titulo: "Segurado Excluído",
+          descricao: `${usuarioLogado} excluiu o segurado ${nomeSegurado}`,
+          categoria: "Movimentacoes",
+          tipo: "Movimentacao",
+          prioridade: "Normal",
+          icone: "🗑️"
+        });
+        console.log("✅ Notificação de exclusão enviada ao admin");
+      }
+    } catch (notifError) {
+      console.error("⚠️ Erro ao criar notificação:", notifError);
+    }
+    
     return true;
   } catch (error: any) {
     console.error("Erro ao deletar Segurado:", error);

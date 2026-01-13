@@ -44,10 +44,35 @@ export async function getAllCorretoresForAuth(): Promise<corretor[]> {
 
 export async function atualizarCorretor(name: string, dados: Partial<corretor>) {
   try {
-    if (!canEdit(name)) {
-      throw new Error("Você não tem permissão para editar este corretor");
-    }
+    // Permissão total - todos podem editar
     const response = await frappe.put(`/resource/Corretores/${name}`, dados);
+    
+    // 🔔 Notificar admin sobre a edição (se não for o admin editando)
+    try {
+      const usuarioLogado = localStorage.getItem("userName") || "Sistema";
+      const isAdminUser = localStorage.getItem("isAdmin") === "true";
+      const nomeCorretor = dados.nome_completo || name;
+      
+      if (!isAdminUser) {
+        const { NotificacoesService } = await import("./Notificacoes");
+        const notificacoesService = new NotificacoesService();
+        await notificacoesService.criar({
+          destinatario: "Administrator",
+          titulo: "Corretor Editado",
+          descricao: `${usuarioLogado} editou os dados do corretor ${nomeCorretor}`,
+          categoria: "Movimentacoes",
+          tipo: "Movimentacao",
+          prioridade: "Baixa",
+          referencia_doctype: "Corretores",
+          referencia_name: name,
+          icone: "✏️"
+        });
+        console.log("✅ Notificação de edição enviada ao admin");
+      }
+    } catch (notifError) {
+      console.error("⚠️ Erro ao criar notificação:", notifError);
+    }
+    
     return response.data.data;
   } catch (error: any) {
     console.error("Erro ao atualizar corretor:", error);
@@ -57,15 +82,45 @@ export async function atualizarCorretor(name: string, dados: Partial<corretor>) 
 
 export async function deletarCorretor(name: string) {
   try {
-    if (!canEdit(name)) {
-      throw new Error("Você não tem permissão para deletar este corretor");
+    // Buscar nome do corretor antes de deletar
+    let nomeCorretor = name;
+    try {
+      const corretor = await frappe.get(`/resource/Corretores/${name}`);
+      nomeCorretor = corretor.data?.data?.nome_completo || name;
+    } catch (err) {
+      console.warn("⚠️ Não foi possível buscar nome do corretor");
     }
-    // Usando método customizado do Frappe para forçar exclusão
+    
+    // Permissão total - todos podem deletar
     await frappe.post('/method/frappe.client.delete', {
       doctype: 'Corretores',
       name: name,
       force: 1
     });
+    
+    // 🔔 Notificar admin sobre exclusão (se não for o admin deletando)
+    try {
+      const usuarioLogado = localStorage.getItem("userName") || "Sistema";
+      const isAdminUser = localStorage.getItem("isAdmin") === "true";
+      
+      if (!isAdminUser) {
+        const { NotificacoesService } = await import("./Notificacoes");
+        const notificacoesService = new NotificacoesService();
+        await notificacoesService.criar({
+          destinatario: "Administrator",
+          titulo: "Corretor Excluído",
+          descricao: `${usuarioLogado} excluiu o corretor ${nomeCorretor}`,
+          categoria: "Movimentacoes",
+          tipo: "Movimentacao",
+          prioridade: "Alta",
+          icone: "🗑️"
+        });
+        console.log("✅ Notificação de exclusão enviada ao admin");
+      }
+    } catch (notifError) {
+      console.error("⚠️ Erro ao criar notificação:", notifError);
+    }
+    
     return true;
   } catch (error: any) {
     console.error("Erro ao deletar corretor:", error);

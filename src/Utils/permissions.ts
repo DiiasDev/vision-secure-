@@ -5,57 +5,32 @@ export { isAdmin, getCorretorId, isAuthenticated, getLoggedUser } from "../Servi
 
 /**
  * Verifica se o usuário tem permissão para visualizar todos os dados
+ * MODIFICADO: Todos os usuários têm acesso total
  */
 export const canViewAll = (): boolean => {
-  return checkIsAdmin();
+  return true; // Todos podem visualizar tudo
 };
 
 /**
  * Verifica se o usuário pode editar/deletar um registro
- * Admin pode editar tudo, corretor só pode editar seus próprios registros
+ * MODIFICADO: Todos os usuários têm permissão total
  */
 export const canEdit = (ownerCorretorId?: string): boolean => {
-  if (checkIsAdmin()) return true;
-  
-  const currentCorretorId = getCorretorId();
-  if (!currentCorretorId || !ownerCorretorId) return false;
-  
-  return currentCorretorId === ownerCorretorId;
+  return true; // Todos podem editar/deletar tudo
 };
 
 /**
  * Filtra dados para mostrar apenas os do corretor logado (se não for admin)
+ * MODIFICADO: Retorna todos os dados para todos os usuários
  */
 export const filterDataByUser = <T extends { owner?: string; corretor?: string; name?: string }>(
   data: T[]
 ): T[] => {
-  const isUserAdmin = checkIsAdmin();
-  const corretorId = getCorretorId();
-  
-  console.log("🔍 filterDataByUser chamado:");
-  console.log("  - isAdmin:", isUserAdmin);
-  console.log("  - corretorId:", corretorId);
+  console.log("🔍 filterDataByUser chamado (sem restrições):");
   console.log("  - Total de registros:", data.length);
+  console.log("  ✅ Retornando todos os dados para todos os usuários");
   
-  if (isUserAdmin) {
-    console.log("  ✅ Admin - retornando todos os dados");
-    return data;
-  }
-  
-  if (!corretorId) {
-    console.log("  ❌ Sem corretorId - retornando vazio");
-    return [];
-  }
-  
-  // Filtrar por corretor ou owner
-  const filtered = data.filter((item) => {
-    const match = item.corretor === corretorId || item.owner === corretorId;
-    console.log(`  - Item ${item.name}: corretor=${item.corretor}, owner=${item.owner}, match=${match}`);
-    return match;
-  });
-  
-  console.log("  ✅ Filtrados:", filtered.length, "de", data.length);
-  return filtered;
+  return data; // Todos podem ver tudo
 };
 
 /**

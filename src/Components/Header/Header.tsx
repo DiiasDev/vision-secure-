@@ -14,25 +14,25 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import { logoutUser, getCorretorId } from "../../Services/auth";
 import ModalNotificacao from "../Notificacoes/ModalNotificacao";
+import { useNotificacoes } from "../../hooks/useNotificacoes";
 import "../../Styles/theme.css"
 
 type HeaderProps = {
   userName: string;
   isDarkMode: boolean;
   onToggleTheme: () => void;
-  notificationsCount?: number;
 };
 
 export default function Header({
   userName,
   isDarkMode,
   onToggleTheme,
-  notificationsCount = 0,
 }: HeaderProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [modalNotificacoesAberto, setModalNotificacoesAberto] = useState(false);
   const navigate = useNavigate();
   const corretorId = getCorretorId();
+  const { naoLidas, marcarComoLida } = useNotificacoes();
 
   const openMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -91,7 +91,7 @@ export default function Header({
           }}
         >
           <Badge
-            badgeContent={notificationsCount}
+            badgeContent={naoLidas}
             sx={{
               "& .MuiBadge-badge": {
                 backgroundColor: "var(--color-danger)",
@@ -216,6 +216,7 @@ export default function Header({
         open={modalNotificacoesAberto}
         onClose={() => setModalNotificacoesAberto(false)}
         corretorId={corretorId}
+        onMarcarComoLida={marcarComoLida}
       />
     </header>
   );

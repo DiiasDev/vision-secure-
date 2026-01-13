@@ -89,9 +89,8 @@ function App() {
                   userName={userName}
                   isDarkMode={isDarkMode}
                   onToggleTheme={toggleTheme}
-                  notificationsCount={3}
                 />
-                <main className="flex-1 overflow-auto bg-[var(--bg-app)]">
+                <main className="flex-1 overflow-auto bg-[var(--bg-app)]">"
                   <Routes>
                     <Route path="/" element={<Navigate to="/dashboard" replace />} />
                     <Route path="/dashboard" element={<Dashboard />} />
