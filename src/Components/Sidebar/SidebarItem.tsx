@@ -7,6 +7,7 @@ interface SubTab {
   label: string;
   to: string;
   type: "create" | "list";
+  icon?: LucideIcon;
 }
 
 interface SidebarItemProps {
@@ -234,7 +235,7 @@ export function SidebarItem({
           "
         >
           {subTabs.map((subTab) => {
-            const SubIcon = subTab.type === "create" ? Plus : List;
+            const SubIcon = subTab.icon || (subTab.type === "create" ? Plus : List);
             return (
               <NavLink
                 key={subTab.to}

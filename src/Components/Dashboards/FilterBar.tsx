@@ -1,6 +1,6 @@
 import type { FilterBarProps } from './types';
 
-export function FilterBar({ filter, onFilterChange }: FilterBarProps) {
+export function FilterBar({ filter, onFilterChange, totalAll, totalExpiring }: FilterBarProps) {
   return (
     <div className="flex gap-2 items-center">
       <span className="text-sm font-medium mr-2" style={{ color: 'var(--text-secondary)' }}>
@@ -15,7 +15,7 @@ export function FilterBar({ filter, onFilterChange }: FilterBarProps) {
         }`}
         style={filter !== 'all' ? { color: 'var(--text-secondary)' } : {}}
       >
-        Todos ({8})
+        Todos ({totalAll})
       </button>
       <button
         onClick={() => onFilterChange('expiring')}
@@ -26,7 +26,7 @@ export function FilterBar({ filter, onFilterChange }: FilterBarProps) {
         }`}
         style={filter !== 'expiring' ? { color: 'var(--text-secondary)' } : {}}
       >
-        Apenas Vencendo
+        Apenas Vencendo ({totalExpiring})
       </button>
     </div>
   );

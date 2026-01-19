@@ -5,6 +5,9 @@ import {
   Car,
   UserCog,
   FileText,
+  DollarSign,
+  Calculator,
+  TrendingUp,
   ChevronLeft,
   ChevronRight
 } from "lucide-react";
@@ -150,6 +153,16 @@ export function Sidebar() {
           subTabs={[
             { label: "Criar Seguro", to: "/seguros/criar", type: "create" },
             { label: "Listar Seguros", to: "/seguros/listar", type: "list" }
+          ]}
+        />
+
+        <SidebarItem
+          icon={DollarSign}
+          label="Financeiro"
+          isCollapsed={isCollapsed}
+          subTabs={[
+            { label: "Acerto", to: "/financeiro/acerto", type: "create", icon: Calculator },
+            { label: "Gestão", to: "/financeiro/gestao", type: "create", icon: TrendingUp }
           ]}
         />
       </nav>

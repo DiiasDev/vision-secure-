@@ -88,6 +88,11 @@ export default function Dashboard() {
     return dias <= 5 && dias >= 0 && seguro.situacao_pagamento !== 'Pago';
   }).length;
 
+  const totalExpiring = seguros.filter(seguro => 
+    seguro.situacao_pagamento !== 'Pago' || 
+    seguro.status_segurado === 'Vencido'
+  ).length;
+
   return (
     <div className="min-h-screen p-8 pb-24" style={{ backgroundColor: 'var(--bg-app)' }}>
       {/* Header */}
@@ -137,7 +142,12 @@ export default function Dashboard() {
             <AssignmentIcon sx={{ fontSize: 24, color: 'var(--color-primary)' }} />
             Lista de Seguros
           </h2>
-          <FilterBar filter={filter} onFilterChange={handleFilterChange} />
+          <FilterBar 
+            filter={filter} 
+            onFilterChange={handleFilterChange}
+            totalAll={seguros.length}
+            totalExpiring={totalExpiring}
+          />
         </div>
 
         {loading ? (

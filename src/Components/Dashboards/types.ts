@@ -27,4 +27,6 @@ export interface StatCardProps {
 export interface FilterBarProps {
   filter: 'all' | 'expiring';
   onFilterChange: (filter: 'all' | 'expiring') => void;
+  totalAll: number;
+  totalExpiring: number;
 }

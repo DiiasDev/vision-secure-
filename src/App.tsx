@@ -10,6 +10,10 @@ import Seguradoras from "./Pages/Seguradoras/Seguradoras";
 import Corretores from "./Pages/Corretores/Corretores";
 import Veiculos from "./Pages/Veiculos/Veiculos";
 import Seguros from "./Pages/Seguros/Seguros";
+import Financeiro from "./Pages/Financeiro/Financeiro";
+import Acerto from "./Pages/Financeiro/Acerto";
+import Gestao from "./Pages/Financeiro/Gestao";
+import NotFound from "./Pages/NotFound/NotFound";
 import Auth from "./Pages/Auth/Auth";
 import ProtectedRoute from "./Components/ProtectedRoute";
 import { isAuthenticated, getLoggedUser } from "./Services/auth";
@@ -119,6 +123,14 @@ function App() {
                     <Route path="/seguros" element={<Navigate to="/seguros/listar" replace />} />
                     <Route path="/seguros/criar" element={<Seguros initialTab={1} />} />
                     <Route path="/seguros/listar" element={<Seguros initialTab={0} />} />
+                    
+                    {/* Financeiro */}
+                    <Route path="/financeiro" element={<Navigate to="/financeiro/acerto" replace />} />
+                    <Route path="/financeiro/acerto" element={<Acerto />} />
+                    <Route path="/financeiro/gestao" element={<Gestao />} />
+                    
+                    {/* 404 - Not Found */}
+                    <Route path="*" element={<NotFound />} />
                   </Routes>
                 </main>
               </div>
