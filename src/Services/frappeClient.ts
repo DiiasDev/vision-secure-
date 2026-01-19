@@ -28,7 +28,7 @@ frappe.interceptors.response.use(
 // Verifica se o backend está online
 export async function verificarStatusBackend(): Promise<boolean> {
   try {
-    await frappe.get("/api/method/ping");
+    await frappe.get("/method/ping");
     return true;
   } catch (error) {
     return false;
