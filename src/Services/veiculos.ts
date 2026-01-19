@@ -125,7 +125,7 @@ export async function deletarVeiculo(name: string) {
     
     // Permissão total - todos podem deletar
     await frappe.post('/method/frappe.client.delete', {
-      doctype: 'Veiculos',
+      doctype: 'Veiculos Segurados',
       name: name,
       force: 1
     });

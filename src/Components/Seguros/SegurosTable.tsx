@@ -19,6 +19,8 @@ import {
   DialogActions,
   Button,
   DialogContentText,
+  Checkbox,
+  Alert,
 } from '@mui/material';
 import {
   WhatsApp as WhatsAppIcon,
@@ -32,18 +34,17 @@ import {
   MoreHoriz as MoreHorizIcon,
   Person as PersonIcon,
   Phone as PhoneIcon,
-  Email as EmailIcon,
   Description as DescriptionIcon,
   Badge as BadgeIcon,
   AccessTime as AccessTimeIcon,
-  LocalShipping as LocalShippingIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
+  DeleteSweep as DeleteSweepIcon,
 } from '@mui/icons-material';
 import type { seguro } from '../../Types/seguros.types';
 import { formatDate, formatCPF, formatPhone } from '../../Utils/Formatter';
-import { getInitials } from '../../Utils/StringHelpers';
 import { deletarSeguro } from '../../Services/Seguros';
+import { ErrorModal } from '../ErrorModal/ErrorModal';
 
 interface SegurosTableProps {
   seguros: seguro[];
@@ -56,16 +57,89 @@ export function SegurosTable({ seguros, onEdit, onDelete }: SegurosTableProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [seguroToDelete, setSeguroToDelete] = useState<seguro | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+  const [dependencyError, setDependencyError] = useState<string | null>(null);
+  const [errorModalOpen, setErrorModalOpen] = useState(false);
+  const [bulkErrors, setBulkErrors] = useState<Array<{id: string, error: string}>>([]);
 
-  const handleDeleteClick = (seguro: seguro) => {
+  const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.checked) {
+      const allIds = new Set(seguros.map((s) => s.name!));
+      setSelected(allIds);
+    } else {
+      setSelected(new Set());
+    }
+  };
+
+  const handleSelectOne = (id: string) => {
+    const newSelected = new Set(selected);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelected(newSelected);
+  };
+
+  const handleBulkDelete = () => {
+    if (selected.size === 0) return;
+    setBulkDeleteDialogOpen(true);
+  };
+
+  const handleBulkDeleteConfirm = async () => {
+    setDeleting(true);
+    setDependencyError(null);
+    const errorsList: Array<{id: string, error: string}> = [];
+    let successCount = 0;
+
+    for (const seguroId of Array.from(selected)) {
+      try {
+        // Seguros não têm dependências, então deletamos diretamente
+        await deletarSeguro(seguroId);
+        successCount++;
+      } catch (error: any) {
+        console.error(`Erro ao deletar seguro ${seguroId}:`, error);
+        let errorMessage = 'Erro desconhecido';
+        
+        if (error.response?.status === 404) {
+          errorMessage = 'Seguro não existe mais no sistema';
+        } else if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
+        errorsList.push({ id: seguroId, error: errorMessage });
+      }
+    }
+
+    setDeleting(false);
+    setBulkDeleteDialogOpen(false);
+    setSelected(new Set());
+
+    if (errorsList.length > 0) {
+      setBulkErrors(errorsList);
+      setErrorModalOpen(true);
+    }
+
+    if (onDelete) {
+      onDelete();
+    }
+  };
+
+  const handleDeleteClick = async (seguro: seguro) => {
+    // Seguros não têm dependências (são o topo da hierarquia)
     setSeguroToDelete(seguro);
+    setDependencyError(null);
     setDeleteDialogOpen(true);
   };
 
   const handleDeleteConfirm = async () => {
-    if (!seguroToDelete) return;
+    if (!seguroToDelete || !seguroToDelete.name) return;
 
     setDeleting(true);
+    setDependencyError(null);
     try {
       await deletarSeguro(seguroToDelete.name);
       setDeleteDialogOpen(false);
@@ -75,8 +149,17 @@ export function SegurosTable({ seguros, onEdit, onDelete }: SegurosTableProps) {
       }
     } catch (error: any) {
       console.error('Erro ao deletar seguro:', error);
-      const errorMessage = error.message || 'Erro ao deletar seguro. Tente novamente.';
-      alert(errorMessage);
+      let errorMessage = 'Erro ao deletar seguro. Tente novamente.';
+      
+      if (error.response?.status === 404) {
+        errorMessage = 'Este seguro não existe mais no sistema ou já foi deletado.';
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setDependencyError(errorMessage);
     } finally {
       setDeleting(false);
     }
@@ -124,7 +207,7 @@ export function SegurosTable({ seguros, onEdit, onDelete }: SegurosTableProps) {
 
   const getSituacaoPagamentoColor = (situacao: string) => {
     switch (situacao) {
-      case 'Pago':
+      case 'Em Dia':
         return 'bg-green-50 text-green-700 border border-green-200';
       case 'Pendente':
         return 'bg-yellow-50 text-yellow-700 border border-yellow-200';
@@ -145,9 +228,9 @@ export function SegurosTable({ seguros, onEdit, onDelete }: SegurosTableProps) {
     const diffTime = vencimento.getTime() - hoje.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    if (situacaoPagamento === 'Pago') {
+    if (situacaoPagamento === 'Em Dia') {
       return {
-        label: 'Pago',
+        label: 'Em Dia',
         className: 'bg-green-50 text-green-700 border border-green-200',
       };
     }
@@ -204,7 +287,7 @@ export function SegurosTable({ seguros, onEdit, onDelete }: SegurosTableProps) {
     let message = `Olá ${firstName}, tudo bem? 😊\n\n`;
     
     // CENÁRIO 1: Pagamento já realizado - Relacionamento e fidelização
-    if (seguro.situacao_pagamento === 'Pago' && diffDays > 30) {
+    if (seguro.situacao_pagamento === 'Em Dia' && diffDays > 30) {
       message += `Passando aqui para agradecer pela confiança! 🙏\n\n`;
       message += `Sua apólice *${seguro.numero_apolice}* (${seguro.tipo_seguro}) está em dia e vigente até *${formatDate(seguro.fim_vigencia)}*.\n\n`;
       message += `Estamos à disposição para qualquer necessidade:\n`;
@@ -214,7 +297,7 @@ export function SegurosTable({ seguros, onEdit, onDelete }: SegurosTableProps) {
       message += `Conte sempre conosco! 💙`;
     }
     // CENÁRIO 2: Pagamento em dia, renovação se aproximando (30-60 dias)
-    else if (seguro.situacao_pagamento === 'Pago' && diffDays >= 15 && diffDays <= 30) {
+    else if (seguro.situacao_pagamento === 'Em Dia' && diffDays >= 15 && diffDays <= 30) {
       message += `Tudo certo com sua apólice *${seguro.numero_apolice}*! ✅\n\n`;
       message += `Só passando para lembrar que a renovação se aproxima:\n`;
       message += `📅 Vencimento: *${formatDate(seguro.fim_vigencia)}* (em ${diffDays} dias)\n\n`;
@@ -360,6 +443,44 @@ export function SegurosTable({ seguros, onEdit, onDelete }: SegurosTableProps) {
         borderColor: 'var(--border-default)',
       }}
     >
+      {/* Bulk Actions Toolbar */}
+      {selected.size > 0 && (
+        <Box
+          sx={{
+            px: 3,
+            py: 2,
+            backgroundColor: 'rgba(99, 102, 241, 0.1)',
+            borderBottom: '1px solid',
+            borderColor: 'var(--border-default)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <span
+            style={{
+              color: 'var(--color-primary)',
+              fontWeight: 600,
+              fontSize: '0.95rem',
+            }}
+          >
+            {selected.size} seguro(s) selecionado(s)
+          </span>
+          <Button
+            variant="contained"
+            color="error"
+            startIcon={<DeleteSweepIcon />}
+            onClick={handleBulkDelete}
+            sx={{
+              textTransform: 'none',
+              fontWeight: 500,
+            }}
+          >
+            Deletar Selecionados
+          </Button>
+        </Box>
+      )}
+
       <Table sx={{ minWidth: 1200 }}>
         <TableHead>
           <TableRow
@@ -369,6 +490,22 @@ export function SegurosTable({ seguros, onEdit, onDelete }: SegurosTableProps) {
               borderColor: 'var(--border-default)',
             }}
           >
+            <TableCell padding="checkbox" sx={{ py: 1.5 }}>
+              <Checkbox
+                indeterminate={selected.size > 0 && selected.size < seguros.length}
+                checked={seguros.length > 0 && selected.size === seguros.length}
+                onChange={handleSelectAll}
+                sx={{
+                  color: 'var(--text-muted)',
+                  '&.Mui-checked': {
+                    color: 'var(--color-primary)',
+                  },
+                  '&.MuiCheckbox-indeterminate': {
+                    color: 'var(--color-primary)',
+                  },
+                }}
+              />
+            </TableCell>
             <TableCell 
               sx={{ 
                 py: 1.5,
@@ -468,13 +605,31 @@ export function SegurosTable({ seguros, onEdit, onDelete }: SegurosTableProps) {
               <React.Fragment key={seguro.name}>
                 <TableRow
                   sx={{
-                    backgroundColor: 'var(--bg-table-row)',
+                    backgroundColor: selected.has(seguro.name!)
+                      ? 'rgba(99, 102, 241, 0.08)'
+                      : 'var(--bg-table-row)',
                     '&:hover': {
-                      backgroundColor: 'var(--bg-table-row-hover)',
+                      backgroundColor: selected.has(seguro.name!)
+                        ? 'rgba(99, 102, 241, 0.12)'
+                        : 'var(--bg-table-row-hover)',
                     },
                     transition: 'background-color 0.15s ease',
                   }}
                 >
+                  {/* Checkbox */}
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      checked={selected.has(seguro.name!)}
+                      onChange={() => handleSelectOne(seguro.name!)}
+                      sx={{
+                        color: 'var(--text-muted)',
+                        '&.Mui-checked': {
+                          color: 'var(--color-primary)',
+                        },
+                      }}
+                    />
+                  </TableCell>
+
                   {/* Expand Button */}
                   <TableCell>
                     <IconButton
@@ -707,7 +862,7 @@ export function SegurosTable({ seguros, onEdit, onDelete }: SegurosTableProps) {
                 <TableRow>
                   <TableCell
                     style={{ paddingBottom: 0, paddingTop: 0 }}
-                    colSpan={11}
+                    colSpan={12}
                   >
                     <Collapse in={isExpanded} timeout="auto" unmountOnExit>
                       <Box
@@ -956,13 +1111,19 @@ export function SegurosTable({ seguros, onEdit, onDelete }: SegurosTableProps) {
           </Box>
         </DialogTitle>
         <DialogContent sx={{ pt: 2 }}>
-          <DialogContentText sx={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-            Tem certeza que deseja excluir o seguro{' '}
-            <strong style={{ color: 'var(--text-primary)' }}>
-              {seguroToDelete?.numero_apolice}
-            </strong>
-            ? Esta ação não pode ser desfeita.
-          </DialogContentText>
+          {dependencyError ? (
+            <Alert severity="error" sx={{ mb: 2, whiteSpace: 'pre-line' }}>
+              {dependencyError}
+            </Alert>
+          ) : (
+            <DialogContentText sx={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+              Tem certeza que deseja excluir o seguro{' '}
+              <strong style={{ color: 'var(--text-primary)' }}>
+                {seguroToDelete?.numero_apolice}
+              </strong>
+              ? Esta ação não pode ser desfeita.
+            </DialogContentText>
+          )}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
           <Button
@@ -980,10 +1141,91 @@ export function SegurosTable({ seguros, onEdit, onDelete }: SegurosTableProps) {
               },
             }}
           >
+            {dependencyError ? 'Fechar' : 'Cancelar'}
+          </Button>
+          {!dependencyError && (
+            <Button
+              onClick={handleDeleteConfirm}
+              variant="contained"
+              disabled={deleting}
+              sx={{
+                backgroundColor: '#ef4444',
+                textTransform: 'none',
+                fontWeight: 500,
+                '&:hover': {
+                  backgroundColor: '#dc2626',
+                },
+                '&:disabled': {
+                  backgroundColor: 'rgba(239, 68, 68, 0.5)',
+                },
+              }}
+            >
+              {deleting ? 'Excluindo...' : 'Excluir'}
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
+
+      {/* Bulk Delete Dialog */}
+      <Dialog
+        open={bulkDeleteDialogOpen}
+        onClose={() => setBulkDeleteDialogOpen(false)}
+        PaperProps={{
+          sx: {
+            borderRadius: '12px',
+            padding: '8px',
+            backgroundColor: 'var(--bg-card)',
+            border: '1px solid var(--border-default)',
+          },
+        }}
+      >
+        <DialogTitle sx={{ pb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <DeleteSweepIcon sx={{ color: '#ef4444', fontSize: 20 }} />
+            </Box>
+            <span style={{ color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: 600 }}>
+              Confirmar Exclusão em Massa
+            </span>
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          <DialogContentText sx={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+            Tem certeza que deseja excluir{' '}
+            <strong style={{ color: 'var(--text-primary)' }}>{selected.size}</strong> seguro(s)?
+            Esta ação não pode ser desfeita.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button
+            onClick={() => setBulkDeleteDialogOpen(false)}
+            variant="outlined"
+            disabled={deleting}
+            sx={{
+              color: 'var(--text-secondary)',
+              borderColor: 'var(--border-default)',
+              textTransform: 'none',
+              fontWeight: 500,
+              '&:hover': {
+                borderColor: 'var(--text-secondary)',
+                backgroundColor: 'var(--bg-sidebar-hover)',
+              },
+            }}
+          >
             Cancelar
           </Button>
           <Button
-            onClick={handleDeleteConfirm}
+            onClick={handleBulkDeleteConfirm}
             variant="contained"
             disabled={deleting}
             sx={{
@@ -998,10 +1240,17 @@ export function SegurosTable({ seguros, onEdit, onDelete }: SegurosTableProps) {
               },
             }}
           >
-            {deleting ? 'Excluindo...' : 'Excluir'}
+            {deleting ? 'Excluindo...' : 'Excluir Todos'}
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ErrorModal
+        open={errorModalOpen}
+        onClose={() => setErrorModalOpen(false)}
+        errors={bulkErrors}
+        onRefresh={onDelete}
+      />
     </TableContainer>
   );
 }

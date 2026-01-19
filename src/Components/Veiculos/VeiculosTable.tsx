@@ -17,6 +17,8 @@ import {
   Button,
   DialogContentText,
   Box,
+  Checkbox,
+  Alert,
 } from '@mui/material';
 import {
   DirectionsCar as CarIcon,
@@ -25,12 +27,15 @@ import {
   WorkOutline as WorkIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
+  DeleteSweep as DeleteSweepIcon,
 } from '@mui/icons-material';
 import type { veiculo } from '../../Types/veiculos.types';
 import { formatDate } from '../../Utils/Formatter';
 import { getInitials } from '../../Utils/StringHelpers';
 import { deletarVeiculo } from '../../Services/veiculos';
 import { useState } from 'react';
+import { validateDependencies } from '../../Services/dependencyValidator';
+import { ErrorModal } from '../ErrorModal';
 
 interface VeiculosTableProps {
   veiculos: veiculo[];
@@ -42,8 +47,88 @@ export function VeiculosTable({ veiculos, onEdit, onDelete }: VeiculosTableProps
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [veiculoToDelete, setVeiculoToDelete] = useState<veiculo | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+  const [dependencyError, setDependencyError] = useState<string | null>(null);
+  const [errorModalOpen, setErrorModalOpen] = useState(false);
+  const [bulkErrors, setBulkErrors] = useState<Array<{id: string, error: string}>>([]);
 
-  const handleDeleteClick = (veiculo: veiculo) => {
+  const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.checked) {
+      const allIds = new Set(veiculos.map((v) => v.name!));
+      setSelected(allIds);
+    } else {
+      setSelected(new Set());
+    }
+  };
+
+  const handleSelectOne = (id: string) => {
+    const newSelected = new Set(selected);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelected(newSelected);
+  };
+
+  const handleBulkDelete = () => {
+    if (selected.size === 0) return;
+    setBulkDeleteDialogOpen(true);
+  };
+
+  const handleBulkDeleteConfirm = async () => {
+    setDeleting(true);
+    setDependencyError(null);
+    const errorsList: Array<{id: string, error: string}> = [];
+    let successCount = 0;
+
+    for (const veiculoId of Array.from(selected)) {
+      try {
+        const validation = await validateDependencies('Veiculos', veiculoId);
+        if (validation.hasError) {
+          errorsList.push({ id: veiculoId, error: validation.message });
+          continue;
+        }
+        await deletarVeiculo(veiculoId);
+        successCount++;
+      } catch (error: any) {
+        console.error(`Erro ao deletar veículo ${veiculoId}:`, error);
+        let errorMessage = 'Erro desconhecido';
+        
+        if (error.response?.status === 404) {
+          errorMessage = 'Veículo não existe mais no sistema';
+        } else if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
+        errorsList.push({ id: veiculoId, error: errorMessage });
+      }
+    }
+
+    setDeleting(false);
+    setBulkDeleteDialogOpen(false);
+    setSelected(new Set());
+
+    if (errorsList.length > 0) {
+      setBulkErrors(errorsList);
+      setErrorModalOpen(true);
+    }
+
+    if (onDelete) {
+      onDelete();
+    }
+  };
+
+  const handleDeleteClick = async (veiculo: veiculo) => {
+    const validation = await validateDependencies('Veiculos', veiculo.name);
+    if (validation.hasError) {
+      setDependencyError(validation.message);
+    } else {
+      setDependencyError(null);
+    }
     setVeiculoToDelete(veiculo);
     setDeleteDialogOpen(true);
   };
@@ -56,12 +141,14 @@ export function VeiculosTable({ veiculos, onEdit, onDelete }: VeiculosTableProps
       await deletarVeiculo(veiculoToDelete.name);
       setDeleteDialogOpen(false);
       setVeiculoToDelete(null);
+      setDependencyError(null);
       if (onDelete) {
         onDelete();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao deletar veículo:', error);
-      alert('Erro ao deletar veículo. Tente novamente.');
+      const errorMessage = error.message || 'Erro ao deletar veículo. Tente novamente.';
+      setDependencyError(errorMessage);
     } finally {
       setDeleting(false);
     }
@@ -70,6 +157,7 @@ export function VeiculosTable({ veiculos, onEdit, onDelete }: VeiculosTableProps
   const handleDeleteCancel = () => {
     setDeleteDialogOpen(false);
     setVeiculoToDelete(null);
+    setDependencyError(null);
   };
 
   const getTipoIcon = (tipo: string) => {
@@ -127,6 +215,44 @@ export function VeiculosTable({ veiculos, onEdit, onDelete }: VeiculosTableProps
         borderColor: 'var(--border-default)',
       }}
     >
+      {/* Bulk Actions Toolbar */}
+      {selected.size > 0 && (
+        <Box
+          sx={{
+            px: 3,
+            py: 2,
+            backgroundColor: 'rgba(99, 102, 241, 0.1)',
+            borderBottom: '1px solid',
+            borderColor: 'var(--border-default)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <span
+            style={{
+              color: 'var(--color-primary)',
+              fontWeight: 600,
+              fontSize: '0.95rem',
+            }}
+          >
+            {selected.size} veículo(s) selecionado(s)
+          </span>
+          <Button
+            variant="contained"
+            color="error"
+            startIcon={<DeleteSweepIcon />}
+            onClick={handleBulkDelete}
+            sx={{
+              textTransform: 'none',
+              fontWeight: 500,
+            }}
+          >
+            Deletar Selecionados
+          </Button>
+        </Box>
+      )}
+
       <Table>
         <TableHead>
           <TableRow
@@ -134,6 +260,22 @@ export function VeiculosTable({ veiculos, onEdit, onDelete }: VeiculosTableProps
               backgroundColor: 'var(--bg-table-header)',
             }}
           >
+            <TableCell padding="checkbox" sx={{ py: 2 }}>
+              <Checkbox
+                indeterminate={selected.size > 0 && selected.size < veiculos.length}
+                checked={veiculos.length > 0 && selected.size === veiculos.length}
+                onChange={handleSelectAll}
+                sx={{
+                  color: 'var(--text-muted)',
+                  '&.Mui-checked': {
+                    color: 'var(--color-primary)',
+                  },
+                  '&.MuiCheckbox-indeterminate': {
+                    color: 'var(--color-primary)',
+                  },
+                }}
+              />
+            </TableCell>
             <TableCell sx={{ py: 2 }}>
               <span
                 className="font-semibold text-xs uppercase tracking-wide"
@@ -208,13 +350,31 @@ export function VeiculosTable({ veiculos, onEdit, onDelete }: VeiculosTableProps
               <TableRow
                 key={veiculo.name}
                 sx={{
-                  backgroundColor: 'var(--bg-table-row)',
+                  backgroundColor: selected.has(veiculo.name!)
+                    ? 'rgba(99, 102, 241, 0.08)'
+                    : 'var(--bg-table-row)',
                   '&:hover': {
-                    backgroundColor: 'var(--bg-table-row-hover)',
+                    backgroundColor: selected.has(veiculo.name!)
+                      ? 'rgba(99, 102, 241, 0.12)'
+                      : 'var(--bg-table-row-hover)',
                   },
                   transition: 'background-color 0.2s',
                 }}
               >
+                {/* Checkbox */}
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    checked={selected.has(veiculo.name!)}
+                    onChange={() => handleSelectOne(veiculo.name!)}
+                    sx={{
+                      color: 'var(--text-muted)',
+                      '&.Mui-checked': {
+                        color: 'var(--color-primary)',
+                      },
+                    }}
+                  />
+                </TableCell>
+
                 {/* Marca e Modelo */}
                 <TableCell sx={{ py: 2 }}>
                   <div className="flex items-center gap-3">
@@ -374,13 +534,19 @@ export function VeiculosTable({ veiculos, onEdit, onDelete }: VeiculosTableProps
           </Box>
         </DialogTitle>
         <DialogContent sx={{ pt: 2 }}>
-          <DialogContentText sx={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-            Tem certeza que deseja excluir o veículo{' '}
-            <strong style={{ color: 'var(--text-primary)' }}>
-              {veiculoToDelete?.marca} {veiculoToDelete?.modelo}
-            </strong>
-            ? Esta ação não pode ser desfeita.
-          </DialogContentText>
+          {dependencyError ? (
+            <Alert severity="error" sx={{ mb: 2, whiteSpace: 'pre-line' }}>
+              {dependencyError}
+            </Alert>
+          ) : (
+            <DialogContentText sx={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+              Tem certeza que deseja excluir o veículo{' '}
+              <strong style={{ color: 'var(--text-primary)' }}>
+                {veiculoToDelete?.marca} {veiculoToDelete?.modelo}
+              </strong>
+              ? Esta ação não pode ser desfeita.
+            </DialogContentText>
+          )}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
           <Button
@@ -398,10 +564,91 @@ export function VeiculosTable({ veiculos, onEdit, onDelete }: VeiculosTableProps
               },
             }}
           >
+            {dependencyError ? 'Fechar' : 'Cancelar'}
+          </Button>
+          {!dependencyError && (
+            <Button
+              onClick={handleDeleteConfirm}
+              variant="contained"
+              disabled={deleting}
+              sx={{
+                backgroundColor: '#ef4444',
+                textTransform: 'none',
+                fontWeight: 500,
+                '&:hover': {
+                  backgroundColor: '#dc2626',
+                },
+                '&:disabled': {
+                  backgroundColor: 'rgba(239, 68, 68, 0.5)',
+                },
+              }}
+            >
+              {deleting ? 'Excluindo...' : 'Excluir'}
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
+
+      {/* Bulk Delete Dialog */}
+      <Dialog
+        open={bulkDeleteDialogOpen}
+        onClose={() => setBulkDeleteDialogOpen(false)}
+        PaperProps={{
+          sx: {
+            borderRadius: '12px',
+            padding: '8px',
+            backgroundColor: 'var(--bg-card)',
+            border: '1px solid var(--border-default)',
+          },
+        }}
+      >
+        <DialogTitle sx={{ pb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <DeleteSweepIcon sx={{ color: '#ef4444', fontSize: 20 }} />
+            </Box>
+            <span style={{ color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: 600 }}>
+              Confirmar Exclusão em Massa
+            </span>
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          <DialogContentText sx={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+            Tem certeza que deseja excluir{' '}
+            <strong style={{ color: 'var(--text-primary)' }}>{selected.size}</strong> veículo(s)?
+            Esta ação não pode ser desfeita.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button
+            onClick={() => setBulkDeleteDialogOpen(false)}
+            variant="outlined"
+            disabled={deleting}
+            sx={{
+              color: 'var(--text-secondary)',
+              borderColor: 'var(--border-default)',
+              textTransform: 'none',
+              fontWeight: 500,
+              '&:hover': {
+                borderColor: 'var(--text-secondary)',
+                backgroundColor: 'var(--bg-sidebar-hover)',
+              },
+            }}
+          >
             Cancelar
           </Button>
           <Button
-            onClick={handleDeleteConfirm}
+            onClick={handleBulkDeleteConfirm}
             variant="contained"
             disabled={deleting}
             sx={{
@@ -416,10 +663,17 @@ export function VeiculosTable({ veiculos, onEdit, onDelete }: VeiculosTableProps
               },
             }}
           >
-            {deleting ? 'Excluindo...' : 'Excluir'}
+            {deleting ? 'Excluindo...' : 'Excluir Todos'}
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ErrorModal
+        open={errorModalOpen}
+        onClose={() => setErrorModalOpen(false)}
+        errors={bulkErrors}
+        onRefresh={onDelete}
+      />
     </TableContainer>
   );
 }

@@ -90,7 +90,7 @@ function App() {
                   isDarkMode={isDarkMode}
                   onToggleTheme={toggleTheme}
                 />
-                <main className="flex-1 overflow-auto bg-[var(--bg-app)]">"
+                <main className="flex-1 overflow-auto bg-[var(--bg-app)]">
                   <Routes>
                     <Route path="/" element={<Navigate to="/dashboard" replace />} />
                     <Route path="/dashboard" element={<Dashboard />} />
