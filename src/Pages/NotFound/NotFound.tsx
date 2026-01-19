@@ -11,7 +11,7 @@ export default function NotFound() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[var(--bg-app)] via-[var(--bg-card)] to-[var(--bg-app)] flex items-center justify-center p-6 overflow-hidden relative">
+    <div className="fixed inset-0 bg-gradient-to-br from-[var(--bg-app)] via-[var(--bg-card)] to-[var(--bg-app)] flex items-center justify-center p-4 overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-20 w-72 h-72 bg-[var(--color-primary)] opacity-10 rounded-full blur-3xl animate-pulse"></div>
@@ -27,11 +27,11 @@ export default function NotFound() {
         `}
       >
         {/* 404 Large Number */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-4">
           <div className="inline-flex items-center justify-center gap-4">
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-accent)] opacity-20 blur-2xl rounded-full animate-pulse"></div>
-              <h1 className="relative text-[180px] font-black bg-gradient-to-br from-[var(--color-primary)] via-[var(--color-accent)] to-[var(--color-primary)] bg-clip-text text-transparent leading-none animate-float">
+              <h1 className="relative text-[120px] sm:text-[140px] font-black bg-gradient-to-br from-[var(--color-primary)] via-[var(--color-accent)] to-[var(--color-primary)] bg-clip-text text-transparent leading-none animate-float">
                 404
               </h1>
             </div>
@@ -39,39 +39,39 @@ export default function NotFound() {
         </div>
 
         {/* Alert Icon */}
-        <div className="flex justify-center mb-6">
+        <div className="flex justify-center mb-4">
           <div className="relative">
             <div className="absolute inset-0 bg-[var(--color-warning)] opacity-20 blur-xl rounded-full animate-pulse"></div>
-            <div className="relative w-20 h-20 bg-gradient-to-br from-[var(--color-warning)] to-[var(--color-danger)] rounded-2xl flex items-center justify-center shadow-xl animate-bounce-slow">
-              <AlertTriangle className="w-10 h-10 text-white" strokeWidth={2.5} />
+            <div className="relative w-16 h-16 bg-gradient-to-br from-[var(--color-warning)] to-[var(--color-danger)] rounded-2xl flex items-center justify-center shadow-xl animate-bounce-slow">
+              <AlertTriangle className="w-8 h-8 text-white" strokeWidth={2.5} />
             </div>
           </div>
         </div>
 
         {/* Main Card */}
-        <div className="bg-[var(--bg-card)] rounded-2xl shadow-2xl border border-[var(--border-default)] p-8 backdrop-blur-sm">
-          <div className="text-center space-y-4">
-            <h2 className="text-4xl font-bold text-[var(--text-primary)] animate-slide-in-up">
+        <div className="bg-[var(--bg-card)] rounded-2xl shadow-2xl border border-[var(--border-default)] p-6 backdrop-blur-sm">
+          <div className="text-center space-y-3">
+            <h2 className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)] animate-slide-in-up">
               Página Não Encontrada
             </h2>
-            <p className="text-lg text-[var(--text-secondary)] animate-slide-in-up delay-100">
+            <p className="text-base text-[var(--text-secondary)] animate-slide-in-up delay-100">
               Oops! A página que você está procurando não existe ou foi movida.
             </p>
             <div className="flex items-center justify-center gap-2 text-[var(--text-muted)] animate-slide-in-up delay-200">
-              <Search className="w-5 h-5" />
-              <p className="text-sm">
+              <Search className="w-4 h-4" />
+              <p className="text-xs sm:text-sm">
                 Verifique o URL ou retorne à página inicial
               </p>
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 mt-8 animate-slide-in-up delay-300">
+          <div className="flex flex-col sm:flex-row gap-3 mt-6 animate-slide-in-up delay-300">
             <button
               onClick={() => navigate(-1)}
               className="
-                flex-1 flex items-center justify-center gap-3
-                px-6 py-4 rounded-xl
+                flex-1 flex items-center justify-center gap-2
+                px-5 py-3 rounded-xl
                 bg-[var(--button-secondary-bg)] hover:bg-[var(--button-secondary-hover)]
                 text-[var(--text-primary)] font-semibold
                 border border-[var(--border-default)]
@@ -81,15 +81,15 @@ export default function NotFound() {
                 group
               "
             >
-              <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" strokeWidth={2.5} />
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" strokeWidth={2.5} />
               Voltar
             </button>
 
             <button
               onClick={() => navigate("/dashboard")}
               className="
-                flex-1 flex items-center justify-center gap-3
-                px-6 py-4 rounded-xl
+                flex-1 flex items-center justify-center gap-2
+                px-5 py-3 rounded-xl
                 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-accent)]
                 hover:from-[var(--color-primary-hover)] hover:to-[var(--color-accent-dark)]
                 text-white font-bold
@@ -100,16 +100,16 @@ export default function NotFound() {
                 group
               "
             >
-              <Home className="w-5 h-5 group-hover:scale-110 transition-transform" strokeWidth={2.5} />
+              <Home className="w-4 h-4 group-hover:scale-110 transition-transform" strokeWidth={2.5} />
               Ir para o Dashboard
             </button>
           </div>
         </div>
 
         {/* Helpful Links */}
-        <div className="mt-8 text-center animate-slide-in-up delay-400">
-          <p className="text-sm text-[var(--text-muted)] mb-4">Páginas úteis:</p>
-          <div className="flex flex-wrap justify-center gap-3">
+        <div className="mt-5 text-center animate-slide-in-up delay-400">
+          <p className="text-xs text-[var(--text-muted)] mb-3">Páginas úteis:</p>
+          <div className="flex flex-wrap justify-center gap-2">
             {[
               { label: "Dashboard", path: "/dashboard" },
               { label: "Segurados", path: "/segurados/listar" },
@@ -120,10 +120,10 @@ export default function NotFound() {
                 key={link.path}
                 onClick={() => navigate(link.path)}
                 className="
-                  px-4 py-2 rounded-lg
+                  px-3 py-1.5 rounded-lg
                   bg-[var(--bg-hover)] hover:bg-[var(--color-primary)]/10
                   text-[var(--text-secondary)] hover:text-[var(--color-primary)]
-                  text-sm font-medium
+                  text-xs font-medium
                   border border-transparent hover:border-[var(--color-primary)]/30
                   transition-all duration-200
                   hover:scale-105
