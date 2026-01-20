@@ -33,12 +33,12 @@ export default function ComparacaoPreview({ items }: ComparacaoPreviewProps) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
           <p className="text-sm opacity-90 mb-1">Total Planilhas</p>
-          <p className="text-3xl font-bold">R$ {totalPlanilha.toLocaleString('pt-BR')}</p>
+          <p className="text-3xl font-bold">R$ {totalPlanilha.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
         </div>
         
         <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg">
           <p className="text-sm opacity-90 mb-1">Total Banco</p>
-          <p className="text-3xl font-bold">R$ {totalBanco.toLocaleString('pt-BR')}</p>
+          <p className="text-3xl font-bold">R$ {totalBanco.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
         </div>
         
         <div className={`bg-gradient-to-br rounded-xl p-6 text-white shadow-lg ${
@@ -47,7 +47,7 @@ export default function ComparacaoPreview({ items }: ComparacaoPreviewProps) {
         }`}>
           <p className="text-sm opacity-90 mb-1">Diferença</p>
           <div className="flex items-center space-x-2">
-            <p className="text-3xl font-bold">R$ {Math.abs(totalDiferenca).toLocaleString('pt-BR')}</p>
+            <p className="text-3xl font-bold">R$ {Math.abs(totalDiferenca).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
             {totalDiferenca !== 0 && (
               totalDiferenca > 0 ? 
                 <TrendingUp className="w-6 h-6" /> : 
@@ -95,16 +95,16 @@ export default function ComparacaoPreview({ items }: ComparacaoPreviewProps) {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-right text-[var(--text-primary)] font-medium">
-                    R$ {item.valorPlanilha.toLocaleString('pt-BR')}
+                    R$ {item.valorPlanilha.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </td>
                   <td className="px-6 py-4 text-right text-[var(--text-primary)] font-medium">
-                    R$ {item.valorBanco.toLocaleString('pt-BR')}
+                    R$ {item.valorBanco.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </td>
                   <td className={`px-6 py-4 text-right font-semibold ${
                     item.diferenca === 0 ? 'text-gray-500' :
                     item.diferenca > 0 ? 'text-orange-500' : 'text-red-500'
                   }`}>
-                    {item.diferenca > 0 ? '+' : ''}{item.diferenca !== 0 ? `R$ ${item.diferenca.toLocaleString('pt-BR')}` : '—'}
+                    {item.diferenca > 0 ? '+' : ''}{item.diferenca !== 0 ? `R$ ${item.diferenca.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
                   </td>
                   <td className="px-6 py-4 text-center">
                     {item.status === 'ok' ? (

@@ -27,8 +27,9 @@ export async function processExcelFile(file: File): Promise<ProcessedFileData> {
         // Processar cada planilha
         workbook.SheetNames.forEach((sheetName) => {
           const worksheet = workbook.Sheets[sheetName];
+          
+          // Extrair dados com cabeçalhos
           const jsonData = XLSX.utils.sheet_to_json(worksheet, { 
-            header: 1,
             defval: ''
           });
           

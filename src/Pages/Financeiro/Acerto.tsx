@@ -10,6 +10,13 @@ import {
 } from '../../Components/Acerto/AcertoComponents';
 import FileDebugModal from '../../Components/Acerto/FileDebugModal';
 import { getCorretor } from '../../Services/corretores';
+import { 
+  processarExtratoPDF, 
+  compararExtratoComPlanilhas, 
+  gerarAlertas,
+  type DadosComparacao
+} from '../../Services/extratoApi';
+import { processExcelFile } from '../../Services/fileProcessor';
 
 interface Funcionario {
   id: string;
@@ -22,6 +29,7 @@ interface FileItem {
   funcionarioSugerido?: string;
   funcionarioSelecionado?: string;
   status: 'detectado' | 'manual' | 'pendente';
+  dados?: any[];
 }
 
 export default function Acerto() {
@@ -31,10 +39,14 @@ export default function Acerto() {
   const [corretoresSelect, setCorretoresSelect] = useState<Funcionario[]>([]);
   const [showDebugModal, setShowDebugModal] = useState(false);
   
-  // Estados para os arquivos - Inicializado vazio
+  // Estados para os arquivos
   const [planilhasFuncionarios, setPlanilhasFuncionarios] = useState<FileItem[]>([]);
+  const [movimentacaoBanco, setMovimentacaoBanco] = useState<FileItem[]>([]);
   
-  const [movimentacaoBanco, _setMovimentacaoBanco] = useState<FileItem[]>([]);
+  // Estados para processamento
+  const [dadosComparacao, setDadosComparacao] = useState<DadosComparacao[]>([]);
+  const [alertas, setAlertas] = useState<Array<{tipo: 'warning' | 'info' | 'error', titulo: string, mensagem: string}>>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const steps = [
     'Upload de Arquivos',
@@ -63,28 +75,31 @@ export default function Acerto() {
     carregarCorretores();
   }, []);
 
-  /* Função para detectar funcionário pelo nome do arquivo (para uso futuro)
-  const detectarFuncionario = (fileName: string): string | undefined => {
-    const nomeArquivo = fileName.toLowerCase().replace('.xlsx', '').replace('.xls', '');
-    
-    // Busca por correspondência no nome
-    const funcionarioEncontrado = corretoresSelect.find(func => {
-      const nomeFunc = func.nome.toLowerCase();
-      const primeiroNome = nomeFunc.split(' ')[0];
-      const sobrenome = nomeFunc.split(' ')[1] || '';
-      
-      return nomeArquivo.includes(primeiroNome) || 
-             nomeArquivo.includes(sobrenome) ||
-             nomeArquivo.includes(nomeFunc.replace(' ', ''));
-    });
-
-    return funcionarioEncontrado?.id;
-  };
-  */
-
   // Handlers para planilhas de funcionários
-  const handlePlanilhasFuncionariosChange = (files: FileItem[]) => {
+  const handlePlanilhasFuncionariosChange = async (files: FileItem[]) => {
     setPlanilhasFuncionarios(files);
+    
+    // Processar dados das planilhas
+    const filesComDados = await Promise.all(
+      files.map(async (fileItem) => {
+        try {
+          const dadosProcessados = await processExcelFile(fileItem.file);
+          // Pegar a primeira sheet como padrão
+          const primeiraSheet = dadosProcessados.sheets[0];
+          const dados = dadosProcessados.data[primeiraSheet];
+          
+          return {
+            ...fileItem,
+            dados: dados
+          };
+        } catch (error) {
+          console.error('Erro ao processar planilha:', error);
+          return fileItem;
+        }
+      })
+    );
+    
+    setPlanilhasFuncionarios(filesComDados);
   };
 
   const handleFuncionarioChange = (fileIndex: number, funcionarioId: string) => {
@@ -105,43 +120,65 @@ export default function Acerto() {
 
   // Handlers para movimentação bancária
   const handleMovimentacaoBancoChange = (files: FileItem[]) => {
-    _setMovimentacaoBanco(files);
+    setMovimentacaoBanco(files);
   };
 
   const handleRemoveMovimentacaoBanco = (fileIndex: number) => {
-    _setMovimentacaoBanco(prev => prev.filter((_, index) => index !== fileIndex));
+    setMovimentacaoBanco(prev => prev.filter((_, index) => index !== fileIndex));
   };
 
-  const previewMock = [
-    { funcionario: 'João Silva', valorPlanilha: 15000, valorBanco: 15000, diferenca: 0, status: 'ok' as const, cor: '#3b82f6' },
-    { funcionario: 'Maria Santos', valorPlanilha: 12500, valorBanco: 12000, diferenca: 500, status: 'divergente' as const, cor: '#8b5cf6' },
-    { funcionario: 'Pedro Costa', valorPlanilha: 18000, valorBanco: 18000, diferenca: 0, status: 'ok' as const, cor: '#10b981' },
-    { funcionario: 'Ana Oliveira', valorPlanilha: 9500, valorBanco: 10000, diferenca: -500, status: 'divergente' as const, cor: '#f59e0b' },
-  ];
-
-  const alertasMock = [
-    {
-      tipo: 'warning' as const,
-      titulo: 'Divergência Detectada',
-      mensagem: 'Maria Santos possui diferença de R$ 500,00 entre planilha e banco.'
-    },
-    {
-      tipo: 'warning' as const,
-      titulo: 'Valor Inferior',
-      mensagem: 'Ana Oliveira tem valor no banco R$ 500,00 maior que na planilha.'
-    },
-    {
-      tipo: 'info' as const,
-      titulo: 'Informação',
-      mensagem: '2 de 4 funcionários possuem valores conferidos corretamente.'
+  // Processar extrato e comparar com planilhas
+  const processarComparacao = async () => {
+    setIsProcessing(true);
+    
+    try {
+      console.log('🔄 Iniciando processamento...');
+      
+      // 1. Processar PDF do extrato bancário
+      if (movimentacaoBanco.length === 0) {
+        throw new Error('Nenhum extrato bancário foi selecionado');
+      }
+      
+      const arquivoExtrato = movimentacaoBanco[0].file;
+      console.log('📄 Processando extrato:', arquivoExtrato.name);
+      
+      const lancamentos = await processarExtratoPDF(arquivoExtrato);
+      console.log('✅ Lançamentos extraídos:', lancamentos.length);
+      
+      // 2. Comparar com planilhas
+      console.log('📊 Comparando com planilhas...');
+      const resultadosComparacao = await compararExtratoComPlanilhas(
+        lancamentos,
+        planilhasFuncionarios,
+        corretoresSelect
+      );
+      
+      setDadosComparacao(resultadosComparacao);
+      console.log('✅ Comparação concluída:', resultadosComparacao);
+      
+      // 3. Gerar alertas
+      const alertasGerados = gerarAlertas(resultadosComparacao);
+      setAlertas(alertasGerados);
+      console.log('✅ Alertas gerados:', alertasGerados.length);
+      
+    } catch (error) {
+      console.error('❌ Erro ao processar comparação:', error);
+      alert(`Erro ao processar: ${error}`);
+    } finally {
+      setIsProcessing(false);
     }
-  ];
+  };
 
-  const handleNext = () => {
+  const handleNext = async () => {
+    // Se está indo do Step 2 para o Step 3, processar a comparação
+    if (currentStep === 2) {
+      await processarComparacao();
+    }
+    
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      // Simular processamento
+      // Processar acerto final
       setShowModal(true);
       setModalStage('processando');
       
@@ -163,36 +200,16 @@ export default function Acerto() {
     setShowModal(false);
   };
 
-  // Dados mockados de resultado final
-  const resultadosMock = [
-    {
-      id: '1',
-      nome: 'João Silva',
-      cor: '#3b82f6',
-      totalVendido: 15000,
-      comissao: 10500, // 70% de 15000
-      clientes: ['Cliente A', 'Cliente B', 'Cliente C', 'Cliente D'],
-      status: 'ok' as const
-    },
-    {
-      id: '3',
-      nome: 'Pedro Costa',
-      cor: '#10b981',
-      totalVendido: 18000,
-      comissao: 12600, // 70% de 18000
-      clientes: ['Cliente E', 'Cliente F', 'Cliente G'],
-      status: 'ok' as const
-    },
-    {
-      id: '2',
-      nome: 'Maria Santos',
-      cor: '#8b5cf6',
-      totalVendido: 12500,
-      comissao: 8750,
-      clientes: ['Cliente H', 'Cliente I'],
-      status: 'divergente' as const
-    }
-  ];
+  // Dados de resultado final (convertidos dos dados de comparação)
+  const resultadosFinais = dadosComparacao.length > 0 ? dadosComparacao.map(resultado => ({
+    id: resultado.funcionarioId,
+    nome: resultado.funcionario,
+    cor: resultado.cor,
+    totalVendido: resultado.valorPlanilha,
+    comissao: resultado.valorPlanilha * 0.7, // 70% de comissão
+    clientes: resultado.detalhes.clientesEncontrados,
+    status: resultado.status
+  })) : [];
 
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] p-8">
@@ -270,60 +287,94 @@ export default function Acerto() {
 
           {currentStep === 2 && (
             <div className="space-y-8">
-              <AlertasDivergencias alertas={alertasMock} />
-              <div className="h-px bg-[var(--border-default)]" />
-              <ComparacaoPreview items={previewMock} />
+              {isProcessing ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                  <p className="text-[var(--text-secondary)]">Processando dados...</p>
+                </div>
+              ) : dadosComparacao.length > 0 ? (
+                <>
+                  <AlertasDivergencias alertas={alertas} />
+                  <div className="h-px bg-[var(--border-default)]" />
+                  <ComparacaoPreview items={dadosComparacao.map(d => ({
+                    funcionario: d.funcionario,
+                    valorPlanilha: d.valorPlanilha,
+                    valorBanco: d.valorBanco,
+                    diferenca: d.diferenca,
+                    status: d.status,
+                    cor: d.cor
+                  }))} />
+                </>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-[var(--text-secondary)]">
+                    Clique em "Próximo" para processar os dados
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
           {currentStep === 3 && (
-            <div className="text-center py-12">
-              <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-green-400 to-green-600 rounded-full mb-6 shadow-lg">
-                <svg
-                  className="w-12 h-12 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </div>
-              <h2 className="text-3xl font-bold text-[var(--text-primary)] mb-4">
-                Tudo Pronto!
-              </h2>
-              <p className="text-[var(--text-secondary)] text-lg mb-2">
-                Todos os dados foram revisados e estão prontos para o processamento.
-              </p>
-              <p className="text-[var(--text-muted)] mb-8">
-                Clique em "Processar Acerto" para iniciar a comparação automática.
-              </p>
-              
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 max-w-2xl mx-auto">
-                <h3 className="font-semibold text-blue-900 mb-3">O que acontecerá:</h3>
-                <ul className="text-left text-sm text-blue-800 space-y-2">
-                  <li className="flex items-start space-x-2">
-                    <span className="text-blue-600 mt-1">•</span>
-                    <span>Comparação automática entre valores das planilhas e movimentações bancárias</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <span className="text-blue-600 mt-1">•</span>
-                    <span>Cálculo de comissões (70%) para cada funcionário</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <span className="text-blue-600 mt-1">•</span>
-                    <span>Identificação de divergências e alertas automáticos</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <span className="text-blue-600 mt-1">•</span>
-                    <span>Geração de relatório detalhado exportável para Excel</span>
-                  </li>
-                </ul>
-              </div>
+            <div className="space-y-8">
+              {dadosComparacao.length > 0 ? (
+                <>
+                  <div className="text-center mb-8">
+                    <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-green-400 to-green-600 rounded-full mb-4 shadow-lg">
+                      <svg
+                        className="w-10 h-10 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    </div>
+                    <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">
+                      Comparação Concluída!
+                    </h2>
+                    <p className="text-[var(--text-secondary)]">
+                      Revise os resultados abaixo e clique em "Processar Acerto" para finalizar
+                    </p>
+                  </div>
+
+                  <AlertasDivergencias alertas={alertas} />
+                  <div className="h-px bg-[var(--border-default)]" />
+                  <ComparacaoPreview items={dadosComparacao.map(d => ({
+                    funcionario: d.funcionario,
+                    valorPlanilha: d.valorPlanilha,
+                    valorBanco: d.valorBanco,
+                    diferenca: d.diferenca,
+                    status: d.status,
+                    cor: d.cor
+                  }))} />
+                  
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                    <h3 className="font-semibold text-blue-900 mb-3">Próximos passos:</h3>
+                    <ul className="text-left text-sm text-blue-800 space-y-2">
+                      <li className="flex items-start space-x-2">
+                        <span className="text-blue-600 mt-1">•</span>
+                        <span>Cálculo de comissões (70%) para cada funcionário</span>
+                      </li>
+                      <li className="flex items-start space-x-2">
+                        <span className="text-blue-600 mt-1">•</span>
+                        <span>Geração de relatório detalhado exportável para Excel</span>
+                      </li>
+                    </ul>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-[var(--text-secondary)]">
+                    Nenhum dado de comparação disponível. Volte e refaça o processamento.
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -351,7 +402,8 @@ export default function Acerto() {
 
           <button
             onClick={handleNext}
-            className="px-6 py-3 bg-[var(--color-primary)] text-white rounded-lg font-medium flex items-center space-x-2 hover:opacity-90 transition-opacity shadow-lg"
+            disabled={isProcessing}
+            className="px-6 py-3 bg-[var(--color-primary)] text-white rounded-lg font-medium flex items-center space-x-2 hover:opacity-90 transition-opacity shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span>{currentStep === steps.length - 1 ? 'Processar Acerto' : 'Próximo'}</span>
             <ChevronRight className="w-5 h-5" />
@@ -369,7 +421,7 @@ export default function Acerto() {
             : 'O acerto foi processado com sucesso! Confira os resultados abaixo.'
         }
         progress={modalStage === 'processando' ? 65 : 100}
-        resultados={resultadosMock}
+        resultados={resultadosFinais}
         onClose={() => setShowModal(false)}
         onExportExcel={handleExportExcel}
       />
