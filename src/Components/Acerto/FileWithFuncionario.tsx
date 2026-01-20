@@ -122,6 +122,13 @@ export default function FileWithFuncionario({
               );
             }
             const func = funcionarios.find(f => f.id === selected);
+            if (!func || !func.nome) {
+              return (
+                <Box sx={{ display: 'flex', alignItems: 'center', color: 'var(--color-primary)' }}>
+                  Selecionar Funcionário
+                </Box>
+              );
+            }
             return (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Avatar 
@@ -129,13 +136,13 @@ export default function FileWithFuncionario({
                     width: 24, 
                     height: 24, 
                     fontSize: '0.75rem',
-                    backgroundColor: func?.cor 
+                    backgroundColor: func.cor 
                   }}
                 >
-                  {func?.nome.charAt(0).toUpperCase()}
+                  {func.nome.charAt(0).toUpperCase()}
                 </Avatar>
                 <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>
-                  {func?.nome}
+                  {func.nome}
                 </span>
               </Box>
             );
@@ -166,7 +173,7 @@ export default function FileWithFuncionario({
           <MenuItem value="" disabled sx={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
             Selecionar Funcionário
           </MenuItem>
-          {funcionarios.map((func) => (
+          {funcionarios.filter(func => func && func.nome).map((func) => (
             <MenuItem key={func.id} value={func.id}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Avatar 

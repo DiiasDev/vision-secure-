@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Calculator } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, Calculator, Bug } from 'lucide-react';
 import {
   StepIndicator,
   UploadArea,
@@ -8,6 +8,14 @@ import {
   ProcessamentoModal,
   AlertasDivergencias
 } from '../../Components/Acerto/AcertoComponents';
+import FileDebugModal from '../../Components/Acerto/FileDebugModal';
+import { getCorretor } from '../../Services/corretores';
+
+interface Funcionario {
+  id: string;
+  nome: string;
+  cor: string;
+}
 
 interface FileItem {
   file: File;
@@ -20,39 +28,13 @@ export default function Acerto() {
   const [currentStep, setCurrentStep] = useState(0);
   const [showModal, setShowModal] = useState(false);
   const [modalStage, setModalStage] = useState<'processando' | 'concluido' | 'erro'>('processando');
+  const [corretoresSelect, setCorretoresSelect] = useState<Funcionario[]>([]);
+  const [showDebugModal, setShowDebugModal] = useState(false);
   
-  // Estados para os arquivos - Inicializado com dados mockados
-  const [planilhasFuncionarios, setPlanilhasFuncionarios] = useState<FileItem[]>([
-    {
-      file: new File([], 'joao_silva.xlsx', { type: 'application/vnd.ms-excel' }),
-      funcionarioSugerido: '1',
-      funcionarioSelecionado: '1',
-      status: 'detectado'
-    },
-    {
-      file: new File([], 'maria.xlsx', { type: 'application/vnd.ms-excel' }),
-      funcionarioSugerido: '2',
-      funcionarioSelecionado: '2',
-      status: 'detectado'
-    },
-    {
-      file: new File([], 'pedro_costa.xlsx', { type: 'application/vnd.ms-excel' }),
-      funcionarioSugerido: '3',
-      funcionarioSelecionado: '3',
-      status: 'detectado'
-    },
-    {
-      file: new File([], 'planilha_janeiro.xlsx', { type: 'application/vnd.ms-excel' }),
-      status: 'pendente'
-    },
-  ]);
+  // Estados para os arquivos - Inicializado vazio
+  const [planilhasFuncionarios, setPlanilhasFuncionarios] = useState<FileItem[]>([]);
   
-  const [movimentacaoBanco, setMovimentacaoBanco] = useState<FileItem[]>([
-    {
-      file: new File([], 'movimentacao_banco_janeiro_2026.xlsx', { type: 'application/vnd.ms-excel' }),
-      status: 'manual'
-    }
-  ]);
+  const [movimentacaoBanco, _setMovimentacaoBanco] = useState<FileItem[]>([]);
 
   const steps = [
     'Upload de Arquivos',
@@ -61,22 +43,32 @@ export default function Acerto() {
     'Processar Acerto'
   ];
 
-  // Dados mockados para demonstração visual
-  const funcionariosMock = [
-    { id: '1', nome: 'João Silva', cor: '#3b82f6' },
-    { id: '2', nome: 'Maria Santos', cor: '#8b5cf6' },
-    { id: '3', nome: 'Pedro Costa', cor: '#10b981' },
-    { id: '4', nome: 'Ana Oliveira', cor: '#f59e0b' },
-    { id: '5', nome: 'Carlos Souza', cor: '#ef4444' },
-    { id: '6', nome: 'Juliana Lima', cor: '#ec4899' },
-  ];
+  // Carregar corretores ao montar o componente
+  useEffect(() => {
+    const carregarCorretores = async () => {
+      try {
+        const corretores = await getCorretor();
+        // Mapear para o formato esperado pelos componentes
+        const corretoresMapeados = corretores.map((corretor, index) => ({
+          id: corretor.name || `corretor-${index}`,
+          nome: corretor.nome_completo || 'Sem nome',
+          cor: `hsl(${(index * 137.5) % 360}, 70%, 50%)` // Gerar cores dinâmicas
+        }));
+        setCorretoresSelect(corretoresMapeados);
+      } catch (error) {
+        console.error('Erro ao carregar corretores:', error);
+      }
+    };
+    
+    carregarCorretores();
+  }, []);
 
-  // Função para detectar funcionário pelo nome do arquivo
+  /* Função para detectar funcionário pelo nome do arquivo (para uso futuro)
   const detectarFuncionario = (fileName: string): string | undefined => {
     const nomeArquivo = fileName.toLowerCase().replace('.xlsx', '').replace('.xls', '');
     
     // Busca por correspondência no nome
-    const funcionarioEncontrado = funcionariosMock.find(func => {
+    const funcionarioEncontrado = corretoresSelect.find(func => {
       const nomeFunc = func.nome.toLowerCase();
       const primeiroNome = nomeFunc.split(' ')[0];
       const sobrenome = nomeFunc.split(' ')[1] || '';
@@ -88,6 +80,7 @@ export default function Acerto() {
 
     return funcionarioEncontrado?.id;
   };
+  */
 
   // Handlers para planilhas de funcionários
   const handlePlanilhasFuncionariosChange = (files: FileItem[]) => {
@@ -108,6 +101,15 @@ export default function Acerto() {
 
   const handleRemoveFile = (fileIndex: number) => {
     setPlanilhasFuncionarios(prev => prev.filter((_, index) => index !== fileIndex));
+  };
+
+  // Handlers para movimentação bancária
+  const handleMovimentacaoBancoChange = (files: FileItem[]) => {
+    _setMovimentacaoBanco(files);
+  };
+
+  const handleRemoveMovimentacaoBanco = (fileIndex: number) => {
+    _setMovimentacaoBanco(prev => prev.filter((_, index) => index !== fileIndex));
   };
 
   const previewMock = [
@@ -197,18 +199,31 @@ export default function Acerto() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center space-x-3 mb-2">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[var(--color-primary)] to-blue-600 flex items-center justify-center shadow-lg">
-              <Calculator className="w-6 h-6 text-white" />
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[var(--color-primary)] to-blue-600 flex items-center justify-center shadow-lg">
+                <Calculator className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-[var(--text-primary)]">
+                  Acerto de Valores
+                </h1>
+                <p className="text-[var(--text-secondary)]">
+                  Sistema de comparação e validação de planilhas
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-[var(--text-primary)]">
-                Acerto de Valores
-              </h1>
-              <p className="text-[var(--text-secondary)]">
-                Sistema de comparação e validação de planilhas
-              </p>
-            </div>
+            
+            {/* Botão de Debug */}
+            {planilhasFuncionarios.length > 0 && (
+              <button
+                onClick={() => setShowDebugModal(true)}
+                className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors shadow-md"
+              >
+                <Bug className="w-5 h-5" />
+                <span className="font-medium">Debug ({planilhasFuncionarios.length})</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -227,7 +242,7 @@ export default function Acerto() {
                 acceptedFormats="Excel (.xlsx, .xls) ou CSV"
                 multiple={true}
                 showFuncionarioSelector={true}
-                funcionarios={funcionariosMock}
+                funcionarios={corretoresSelect}
                 files={planilhasFuncionarios}
                 onFilesChange={handlePlanilhasFuncionariosChange}
                 onFuncionarioChange={handleFuncionarioChange}
@@ -240,14 +255,16 @@ export default function Acerto() {
                 acceptedFormats="Excel (.xlsx, .xls), CSV ou PDF"
                 multiple={false}
                 files={movimentacaoBanco}
+                onFilesChange={handleMovimentacaoBancoChange}
+                onRemoveFile={handleRemoveMovimentacaoBanco}
               />
             </div>
           )}
 
           {currentStep === 1 && (
             <FuncionarioSelector
-              funcionarios={funcionariosMock}
-              selectedFuncionarios={['1', '2', '3', '4']}
+              funcionarios={corretoresSelect}
+              selectedFuncionarios={corretoresSelect.map(c => c.id)}
             />
           )}
 
@@ -355,6 +372,14 @@ export default function Acerto() {
         resultados={resultadosMock}
         onClose={() => setShowModal(false)}
         onExportExcel={handleExportExcel}
+      />
+
+      {/* Modal de Debug */}
+      <FileDebugModal
+        isOpen={showDebugModal}
+        onClose={() => setShowDebugModal(false)}
+        files={planilhasFuncionarios}
+        funcionarios={corretoresSelect}
       />
     </div>
   );

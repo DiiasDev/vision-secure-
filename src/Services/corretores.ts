@@ -1,6 +1,6 @@
 import { frappe } from "./frappeClient";
 import type { corretor } from "../Types/corretores.types";
-import { filterDataByUser, canEdit } from "../Utils/permissions";
+import { filterDataByUser } from "../Utils/permissions";
 
 export async function newCorretor(dados: corretor) {
   try {
