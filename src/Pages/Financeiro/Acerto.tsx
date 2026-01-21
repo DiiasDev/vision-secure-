@@ -17,6 +17,7 @@ import {
   type DadosComparacao
 } from '../../Services/extratoApi';
 import { processExcelFile } from '../../Services/fileProcessor';
+import { exportarRelatorioDetalhado } from '../../Services/excelExport';
 
 interface Funcionario {
   id: string;
@@ -196,8 +197,25 @@ export default function Acerto() {
   };
 
   const handleExportExcel = () => {
-    console.log('Exportando para Excel...');
-    setShowModal(false);
+    try {
+      console.log('📊 Exportando relatório para Excel...');
+      
+      if (dadosComparacao.length === 0) {
+        alert('Não há dados para exportar. Faça a comparação primeiro.');
+        return;
+      }
+
+      // Exportar com 70% de comissão
+      exportarRelatorioDetalhado(dadosComparacao, 70);
+      
+      console.log('✅ Relatório exportado com sucesso!');
+      alert('Relatório exportado com sucesso! Verifique a pasta de Downloads.');
+      
+      setShowModal(false);
+    } catch (error) {
+      console.error('❌ Erro ao exportar relatório:', error);
+      alert('Erro ao exportar relatório. Verifique o console para mais detalhes.');
+    }
   };
 
   // Dados de resultado final (convertidos dos dados de comparação)
