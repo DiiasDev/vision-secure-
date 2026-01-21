@@ -71,13 +71,18 @@ export default function ProcessamentoModal({
         {/* Barra de progresso (apenas para processando) */}
         {stage === 'processando' && (
           <div className="mb-6">
-            <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden shadow-inner">
               <div
-                className="h-full bg-[var(--color-primary)] transition-all duration-300 rounded-full"
+                className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-500 ease-out rounded-full relative overflow-hidden"
                 style={{ width: `${progress}%` }}
-              />
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 animate-shimmer"></div>
+              </div>
             </div>
-            <p className="text-center text-sm text-[var(--text-muted)] mt-2">{progress}%</p>
+            <div className="flex items-center justify-between mt-2">
+              <p className="text-sm text-[var(--text-secondary)]">Processando...</p>
+              <p className="text-sm font-semibold text-[var(--color-primary)]">{progress}%</p>
+            </div>
           </div>
         )}
 

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Calculator, Bug } from 'lucide-react';
+import { Snackbar, Alert } from '@mui/material';
+import type { AlertColor } from '@mui/material';
 import {
   StepIndicator,
   UploadArea,
@@ -9,6 +11,7 @@ import {
   AlertasDivergencias
 } from '../../Components/Acerto/AcertoComponents';
 import FileDebugModal from '../../Components/Acerto/FileDebugModal';
+import DocumentPreview from '../../Components/Acerto/DocumentPreview';
 import { getCorretor } from '../../Services/corretores';
 import { 
   processarExtratoPDF, 
@@ -33,12 +36,30 @@ interface FileItem {
   dados?: any[];
 }
 
+const steps = [
+  'Upload de Arquivos',
+  'Selecionar Funcionários',
+  'Revisar Dados',
+  'Processar Acerto'
+];
+
 export default function Acerto() {
   const [currentStep, setCurrentStep] = useState(0);
   const [showModal, setShowModal] = useState(false);
   const [modalStage, setModalStage] = useState<'processando' | 'concluido' | 'erro'>('processando');
   const [corretoresSelect, setCorretoresSelect] = useState<Funcionario[]>([]);
   const [showDebugModal, setShowDebugModal] = useState(false);
+  
+  // Estados para Snackbar
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: AlertColor;
+  }>({
+    open: false,
+    message: '',
+    severity: 'info'
+  });
   
   // Estados para os arquivos
   const [planilhasFuncionarios, setPlanilhasFuncionarios] = useState<FileItem[]>([]);
@@ -48,13 +69,16 @@ export default function Acerto() {
   const [dadosComparacao, setDadosComparacao] = useState<DadosComparacao[]>([]);
   const [alertas, setAlertas] = useState<Array<{tipo: 'warning' | 'info' | 'error', titulo: string, mensagem: string}>>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [progressoModal, setProgressoModal] = useState(0);
 
-  const steps = [
-    'Upload de Arquivos',
-    'Selecionar Funcionários',
-    'Revisar Dados',
-    'Processar Acerto'
-  ];
+  // Função para exibir Snackbar
+  const showSnackbar = (message: string, severity: AlertColor = 'info') => {
+    setSnackbar({ open: true, message, severity });
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
 
   // Carregar corretores ao montar o componente
   useEffect(() => {
@@ -68,8 +92,10 @@ export default function Acerto() {
           cor: `hsl(${(index * 137.5) % 360}, 70%, 50%)` // Gerar cores dinâmicas
         }));
         setCorretoresSelect(corretoresMapeados);
+        showSnackbar(`${corretoresMapeados.length} corretores carregados`, 'success');
       } catch (error) {
         console.error('Erro ao carregar corretores:', error);
+        showSnackbar('Erro ao carregar corretores', 'error');
       }
     };
     
@@ -142,12 +168,15 @@ export default function Acerto() {
       
       const arquivoExtrato = movimentacaoBanco[0].file;
       console.log('📄 Processando extrato:', arquivoExtrato.name);
+      showSnackbar('Processando extrato bancário...', 'info');
       
       const lancamentos = await processarExtratoPDF(arquivoExtrato);
       console.log('✅ Lançamentos extraídos:', lancamentos.length);
+      showSnackbar(`${lancamentos.length} lançamentos extraídos do extrato`, 'success');
       
       // 2. Comparar com planilhas
       console.log('📊 Comparando com planilhas...');
+      showSnackbar('Comparando com planilhas dos corretores...', 'info');
       const resultadosComparacao = await compararExtratoComPlanilhas(
         lancamentos,
         planilhasFuncionarios,
@@ -162,9 +191,11 @@ export default function Acerto() {
       setAlertas(alertasGerados);
       console.log('✅ Alertas gerados:', alertasGerados.length);
       
+      showSnackbar(`Comparação concluída! ${alertasGerados.length} alertas gerados`, 'success');
+      
     } catch (error) {
       console.error('❌ Erro ao processar comparação:', error);
-      alert(`Erro ao processar: ${error}`);
+      showSnackbar(`Erro ao processar: ${error}`, 'error');
     } finally {
       setIsProcessing(false);
     }
@@ -182,11 +213,30 @@ export default function Acerto() {
       // Processar acerto final
       setShowModal(true);
       setModalStage('processando');
+      setProgressoModal(0);
       
-      // Simular conclusão após 3 segundos
-      setTimeout(() => {
-        setModalStage('concluido');
-      }, 3000);
+      // Simular progresso real de 0 a 100%
+      const progressSteps = [
+        { progress: 15, delay: 300 },
+        { progress: 30, delay: 400 },
+        { progress: 50, delay: 500 },
+        { progress: 70, delay: 400 },
+        { progress: 85, delay: 300 },
+        { progress: 100, delay: 400 }
+      ];
+      
+      let stepIndex = 0;
+      const interval = setInterval(() => {
+        if (stepIndex < progressSteps.length) {
+          setProgressoModal(progressSteps[stepIndex].progress);
+          stepIndex++;
+        } else {
+          clearInterval(interval);
+          setTimeout(() => {
+            setModalStage('concluido');
+          }, 300);
+        }
+      }, progressSteps[stepIndex]?.delay || 400);
     }
   };
 
@@ -201,7 +251,7 @@ export default function Acerto() {
       console.log('📊 Exportando relatório para Excel...');
       
       if (dadosComparacao.length === 0) {
-        alert('Não há dados para exportar. Faça a comparação primeiro.');
+        showSnackbar('Não há dados para exportar. Faça a comparação primeiro.', 'warning');
         return;
       }
 
@@ -209,12 +259,12 @@ export default function Acerto() {
       exportarRelatorioDetalhado(dadosComparacao, 70);
       
       console.log('✅ Relatório exportado com sucesso!');
-      alert('Relatório exportado com sucesso! Verifique a pasta de Downloads.');
+      showSnackbar('Relatório exportado com sucesso! Verifique a pasta de Downloads.', 'success');
       
       setShowModal(false);
     } catch (error) {
       console.error('❌ Erro ao exportar relatório:', error);
-      alert('Erro ao exportar relatório. Verifique o console para mais detalhes.');
+      showSnackbar('Erro ao exportar relatório. Verifique o console para mais detalhes.', 'error');
     }
   };
 
@@ -305,6 +355,15 @@ export default function Acerto() {
 
           {currentStep === 2 && (
             <div className="space-y-8">
+              {/* Preview dos documentos */}
+              <DocumentPreview
+                planilhas={planilhasFuncionarios}
+                extrato={movimentacaoBanco.length > 0 ? movimentacaoBanco[0].file : null}
+                funcionarios={corretoresSelect}
+              />
+              
+              <div className="h-px bg-[var(--border-default)]" />
+              
               {isProcessing ? (
                 <div className="text-center py-12">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
@@ -438,7 +497,7 @@ export default function Acerto() {
             ? 'Analisando planilhas e comparando valores...'
             : 'O acerto foi processado com sucesso! Confira os resultados abaixo.'
         }
-        progress={modalStage === 'processando' ? 65 : 100}
+        progress={progressoModal}
         resultados={resultadosFinais}
         onClose={() => setShowModal(false)}
         onExportExcel={handleExportExcel}
@@ -451,6 +510,18 @@ export default function Acerto() {
         files={planilhasFuncionarios}
         funcionarios={corretoresSelect}
       />
+
+      {/* Snackbar para notificações */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 }
