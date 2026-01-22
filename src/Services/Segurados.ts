@@ -1,6 +1,6 @@
 import { frappe } from "./frappeClient";
 import type { segurado } from "../Types/segurados.types";
-import { filterDataByUser, canEdit, getCurrentCorretorForNewRecord, isAdmin, getCorretorId } from "../Utils/permissions";
+import { filterDataByUser, getCurrentCorretorForNewRecord, isAdmin, getCorretorId } from "../Utils/permissions";
 import { salvarAssociacaoCorretor, filtrarPorCorretorLocal } from "../Utils/corretorMapping";
 import { NotificacoesService } from "./Notificacoes";
 
@@ -28,35 +28,6 @@ export async function criarSegurado(dados: segurado) {
     if (corretorId && data.data?.name) {
       salvarAssociacaoCorretor("segurado", data.data.name, corretorId);
     }
-    
-    // 🔔 Notificação desativada - as verificações automáticas já cuidam disso
-    // try {
-    //   const nomeSegurado = dados.nome_segurado || dados.nome_completo || "Novo segurado";
-    //   const usuarioLogado = localStorage.getItem("userName") || "Sistema";
-    //   console.log("🔔 Preparando notificação para admin sobre:", nomeSegurado, "criado por:", usuarioLogado);
-    //   
-    //   const notificacoesService = new NotificacoesService();
-    //   
-    //   const resultNotif = await notificacoesService.criar({
-    //     destinatario: "Administrator",
-    //     titulo: "Novo Segurado Cadastrado",
-    //     descricao: `${usuarioLogado} cadastrou um novo segurado: ${nomeSegurado}`,
-    //     categoria: "Seguros",
-    //     tipo: "Cadastro",
-    //     prioridade: "Normal",
-    //     referencia_doctype: "Segurados",
-    //     referencia_name: data.data?.name,
-    //     icone: "👤"
-    //   });
-    //   
-    //   console.log("✅ Notificação de novo segurado criada:", resultNotif);
-    // } catch (notifError: any) {
-    //   console.error("⚠️ Erro ao criar notificação:", notifError);
-    //   console.error("⚠️ Stack:", notifError.stack);
-    //   console.error("⚠️ Response:", notifError.response?.data);
-    //   // Não falhar o cadastro se a notificação falhar
-    // }
-    
     return data.data;
   } catch (error: any) {
     console.error("❌ Erro ao cadastrar Segurado", error);
@@ -104,7 +75,7 @@ export async function getSegurados(): Promise<segurado[]> {
     }
     
     console.log("✅ Segurados filtrados (final):", filtered.length, filtered.map(s => s.name));
-    return filtered;
+    return filtered as segurado[];
   } catch (error: any) {
     console.error("Erro ao listar Segurados", error);
     throw error;

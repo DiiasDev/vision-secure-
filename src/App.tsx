@@ -12,7 +12,6 @@ import Veiculos from "./Pages/Veiculos/Veiculos";
 import Seguros from "./Pages/Seguros/Seguros";
 import Financeiro from "./Pages/Financeiro/Financeiro";
 import Acerto from "./Pages/Financeiro/Acerto";
-import Gestao from "./Pages/Financeiro/Gestao";
 import NotFound from "./Pages/NotFound/NotFound";
 import Auth from "./Pages/Auth/Auth";
 import ProtectedRoute from "./Components/ProtectedRoute";
@@ -127,7 +126,7 @@ function App() {
                     {/* Financeiro */}
                     <Route path="/financeiro" element={<Navigate to="/financeiro/acerto" replace />} />
                     <Route path="/financeiro/acerto" element={<Acerto />} />
-                    <Route path="/financeiro/gestao" element={<Gestao />} />
+                    <Route path="/financeiro/gestao" element={<Financeiro />} />
                     
                     {/* 404 - Not Found */}
                     <Route path="*" element={<NotFound />} />

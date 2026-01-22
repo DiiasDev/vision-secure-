@@ -1,6 +1,6 @@
 import { frappe } from "./frappeClient";
 import type { veiculo } from "../Types/veiculos.types";
-import { filterDataByUser, canEdit, getCurrentCorretorForNewRecord } from "../Utils/permissions";
+import { filterDataByUser, getCurrentCorretorForNewRecord } from "../Utils/permissions";
 import { salvarAssociacaoCorretor, filtrarPorCorretorLocal } from "../Utils/corretorMapping";
 import { isAdmin, getCorretorId } from "./auth";
 
@@ -9,11 +9,9 @@ export async function newVehicle(dados: veiculo) {
   try {
     // Se não for admin, forçar o corretor logado
     const corretorId = getCurrentCorretorForNewRecord();
-    if (corretorId) {
-      dados.corretor = corretorId;
-    }
+    const dadosComCorretor = corretorId ? { ...dados, corretor: corretorId } : dados;
     
-    const { data } = await frappe.post("/resource/Veiculos Segurados", dados);
+    const { data } = await frappe.post("/resource/Veiculos Segurados", dadosComCorretor);
     const novoVeiculo = data.data;
     
     // Salvar associação no mapeamento local
@@ -50,7 +48,7 @@ export async function getVehicle(): Promise<veiculo[]> {
     
     // Se encontrou veículos pelo backend, usar eles
     if (veiculosFiltradosBackend.length > 0) {
-      return veiculosFiltradosBackend;
+      return veiculosFiltradosBackend as veiculo[];
     }
     
     // Fallback: usar mapeamento local
@@ -67,7 +65,7 @@ export async function getVehicle(): Promise<veiculo[]> {
     console.log("🔍 Veículos com mapeamento local:", veiculosFiltradosLocal.length);
     console.log("✅ Veículos filtrados (final):", veiculosFiltradosLocal.length, veiculosFiltradosLocal);
     
-    return veiculosFiltradosLocal;
+    return veiculosFiltradosLocal as veiculo[];
   } catch (error: any) {
     console.error("Erro ao listar veiculos", error);
     throw error;

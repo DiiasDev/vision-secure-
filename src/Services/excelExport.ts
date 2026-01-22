@@ -3,11 +3,12 @@ import type { DadosComparacao } from './extratoApi';
 
 /**
  * Exporta o relatório de comparação detalhado para Excel com formatação profissional
+ * Retorna o Blob do arquivo para salvar no backend
  */
 export function exportarRelatorioDetalhado(
   dadosComparacao: DadosComparacao[],
   percentualComissao: number = 70
-): void {
+): { blob: Blob; nomeArquivo: string } {
   
   const wb = XLSX.utils.book_new();
   const formatoMoeda = '#,##0.00';
@@ -368,9 +369,30 @@ export function exportarRelatorioDetalhado(
 
   XLSX.utils.book_append_sheet(wb, wsDivergencias, '⚠️ Divergências');
 
-  // ==================== GERAR E BAIXAR ARQUIVO ====================
+  // ==================== GERAR ARQUIVO ====================
   const nomeArquivo = `Acerto_Comissoes_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.xlsx`;
-  XLSX.writeFile(wb, nomeArquivo);
+  
+  // Gerar o arquivo como array buffer
+  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  
+  // Converter para Blob
+  const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 
-  console.log(`✅ Relatório exportado: ${nomeArquivo}`);
+  console.log(`✅ Relatório gerado: ${nomeArquivo}`);
+  
+  return { blob, nomeArquivo };
+}
+
+/**
+ * Baixa o relatório Excel no navegador
+ */
+export function baixarRelatorio(blob: Blob, nomeArquivo: string): void {
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = nomeArquivo;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
 }

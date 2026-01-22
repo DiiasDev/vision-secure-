@@ -4,7 +4,7 @@ import { getSegurados } from "./Segurados";
 import { getSeguradoras } from "./Seguradoras";
 import { getCorretor } from "./corretores";
 import { getVehicle } from "./veiculos";
-import { filterDataByUser, canEdit, getCurrentCorretorForNewRecord } from "../Utils/permissions";
+import { filterDataByUser, getCurrentCorretorForNewRecord } from "../Utils/permissions";
 import { salvarAssociacaoCorretor, filtrarPorCorretorLocal } from "../Utils/corretorMapping";
 import { isAdmin, getCorretorId } from "./auth";
 import { NotificacoesService } from "./Notificacoes";
@@ -81,8 +81,8 @@ export async function newSeguro(dados: seguro) {
         }
       }
       
-      if (dadosLimpos.placa_veiculo) {
-        descricao += ` - Veículo: ${dadosLimpos.placa_veiculo}`;
+      if (dadosLimpos.veiculo_placa) {
+        descricao += ` - Veículo: ${dadosLimpos.veiculo_placa}`;
       }
       
       const notificacoesService = new NotificacoesService();

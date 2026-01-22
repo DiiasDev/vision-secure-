@@ -20,7 +20,8 @@ import {
   type DadosComparacao
 } from '../../Services/extratoApi';
 import { processExcelFile } from '../../Services/fileProcessor';
-import { exportarRelatorioDetalhado } from '../../Services/excelExport';
+import { exportarRelatorioDetalhado, baixarRelatorio } from '../../Services/excelExport';
+import { salvarAcerto } from '../../Services/acertoService';
 
 interface Funcionario {
   id: string;
@@ -246,7 +247,7 @@ export default function Acerto() {
     }
   };
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     try {
       console.log('📊 Exportando relatório para Excel...');
       
@@ -256,12 +257,37 @@ export default function Acerto() {
       }
 
       // Exportar com 70% de comissão
-      exportarRelatorioDetalhado(dadosComparacao, 70);
+      const { blob, nomeArquivo } = exportarRelatorioDetalhado(dadosComparacao, 70);
       
-      console.log('✅ Relatório exportado com sucesso!');
-      showSnackbar('Relatório exportado com sucesso! Verifique a pasta de Downloads.', 'success');
+      console.log('✅ Relatório gerado!');
+      showSnackbar('Salvando acerto no sistema...', 'info');
+
+      // Salvar no backend
+      try {
+        const periodoReferencia = new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+        const resultado = await salvarAcerto(dadosComparacao, blob, nomeArquivo, periodoReferencia);
+        
+        if (resultado.success) {
+          showSnackbar('Acerto salvo com sucesso! Baixando planilha...', 'success');
+          
+          // Baixar o arquivo localmente também
+          baixarRelatorio(blob, nomeArquivo);
+          
+          console.log('✅ Acerto salvo:', resultado);
+          console.log('📄 URL do acerto:', resultado.acerto_url);
+          
+          setShowModal(false);
+        } else {
+          throw new Error(resultado.message);
+        }
+      } catch (saveError: any) {
+        console.error('❌ Erro ao salvar acerto:', saveError);
+        
+        // Mesmo com erro no backend, baixar o arquivo localmente
+        baixarRelatorio(blob, nomeArquivo);
+        showSnackbar('Planilha baixada, mas houve erro ao salvar no sistema.', 'warning');
+      }
       
-      setShowModal(false);
     } catch (error) {
       console.error('❌ Erro ao exportar relatório:', error);
       showSnackbar('Erro ao exportar relatório. Verifique o console para mais detalhes.', 'error');

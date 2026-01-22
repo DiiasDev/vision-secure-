@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { newSeguro, atualizarSeguro } from "../../Services/Seguros";
 import { getSegurados } from "../../Services/Segurados";
 import { getSeguradoras } from "../../Services/Seguradoras";
-import { getCorretor, getAllCorretoresForAuth } from "../../Services/corretores";
+import { getAllCorretoresForAuth } from "../../Services/corretores";
 import { getVehicle } from "../../Services/veiculos";
 import FormComponent from "../FormComponent/FormComponent";
 import { camposSeguros } from "./FieldsSeguros";
@@ -133,7 +133,7 @@ export default function FormSeguros({ initialData, onSuccess }: FormSegurosProps
         veiculo: data.veiculo?.split("|")[0],
       };
       
-      if (isEditMode && initialData) {
+      if (isEditMode && initialData && initialData.name) {
         await atualizarSeguro(initialData.name, dadosFormatados);
         alert("Seguro atualizado com sucesso!");
       } else {
