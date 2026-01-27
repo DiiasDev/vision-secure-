@@ -1,8 +1,11 @@
-import { Card, CardContent, Typography, Box } from '@mui/material';
+import { Card, CardContent, Typography, Box, IconButton } from '@mui/material';
+import { InfoOutlined } from '@mui/icons-material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { useState } from 'react';
 import DateRangeFilter from './DateRangeFilter';
 import CorretorFilter from './CorretorFilter';
 import CategoriaFilter from './CategoriaFilter';
+import InfoModal from './InfoModal';
 
 const vendasPorCategoriaData = [
   { 
@@ -86,7 +89,23 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function VendasPorCategoriaCorretor() {
+  const [infoOpen, setInfoOpen] = useState(false);
+
   return (
+    <>
+    <InfoModal 
+      open={infoOpen}
+      onClose={() => setInfoOpen(false)}
+      title="Vendas por Categoria por Corretor"
+      description="Gráfico de barras empilhadas que detalha o desempenho individual de cada corretor segmentado por categoria de produto."
+      details={[
+        "Cada barra representa um corretor e suas vendas totais",
+        "As cores dentro das barras mostram a contribuição de cada categoria de seguro",
+        "Compare o desempenho entre corretores e identifique especialidades",
+        "Use os filtros para analisar períodos específicos, corretores individuais ou categorias",
+        "Os cards resumo no final mostram o total vendido em cada categoria"
+      ]}
+    />
     <Card 
       sx={{ 
         backgroundColor: 'var(--bg-card)',
@@ -97,23 +116,35 @@ export default function VendasPorCategoriaCorretor() {
     >
       <CardContent>
         <Box className="flex items-center justify-between mb-4 flex-wrap gap-3">
-          <Box>
-            <Typography 
-              variant="h6" 
+          <Box className="flex items-center gap-2">
+            <Box>
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  color: 'var(--text-primary)',
+                  fontWeight: 600,
+                  mb: 0.5
+                }}
+              >
+                Vendas por Categoria por Corretor
+              </Typography>
+              <Typography 
+                variant="body2" 
+                sx={{ color: 'var(--text-secondary)' }}
+              >
+                Desempenho detalhado por tipo de seguro
+              </Typography>
+            </Box>
+            <IconButton 
+              size="small"
+              onClick={() => setInfoOpen(true)}
               sx={{ 
-                color: 'var(--text-primary)',
-                fontWeight: 600,
-                mb: 0.5
+                color: 'var(--text-secondary)',
+                '&:hover': { color: 'var(--color-primary)' }
               }}
             >
-              Vendas por Categoria por Corretor
-            </Typography>
-            <Typography 
-              variant="body2" 
-              sx={{ color: 'var(--text-secondary)' }}
-            >
-              Desempenho detalhado por tipo de seguro
-            </Typography>
+              <InfoOutlined fontSize="small" />
+            </IconButton>
           </Box>
           
           <Box className="flex items-center gap-2 flex-wrap">
@@ -204,5 +235,6 @@ export default function VendasPorCategoriaCorretor() {
         </Box>
       </CardContent>
     </Card>
+    </>
   );
 }

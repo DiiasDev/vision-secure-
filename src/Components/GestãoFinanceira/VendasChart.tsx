@@ -1,7 +1,9 @@
-import { Card, CardContent, Typography, Box, Tabs, Tab } from '@mui/material';
+import { Card, CardContent, Typography, Box, Tabs, Tab, IconButton } from '@mui/material';
+import { InfoOutlined } from '@mui/icons-material';
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useState } from 'react';
 import DateRangeFilter from './DateRangeFilter';
+import InfoModal from './InfoModal';
 
 const vendasData = [
   { mes: 'Jan', vendas: 45000, meta: 40000, ano_anterior: 38000 },
@@ -50,8 +52,22 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export default function VendasChart() {
   const [chartType, setChartType] = useState<'area' | 'line'>('area');
+  const [infoOpen, setInfoOpen] = useState(false);
 
   return (
+    <>
+    <InfoModal 
+      open={infoOpen}
+      onClose={() => setInfoOpen(false)}
+      title="Evolução de Vendas"
+      description="Este gráfico apresenta a evolução mensal das vendas comparando três indicadores importantes para avaliar o desempenho comercial."
+      details={[
+        "Vendas Atuais: Mostra o volume de vendas realizado em cada mês do ano corrente",
+        "Meta: Representa os objetivos estabelecidos para cada período",
+        "Ano Anterior: Permite comparar o desempenho atual com o mesmo período do ano passado",
+        "Você pode alternar entre visualização em Área ou Linha para melhor análise dos dados"
+      ]}
+    />
     <Card 
       sx={{ 
         backgroundColor: 'var(--bg-card)',
@@ -62,23 +78,35 @@ export default function VendasChart() {
     >
       <CardContent>
         <Box className="flex items-center justify-between mb-4 flex-wrap gap-3">
-          <Box>
-            <Typography 
-              variant="h6" 
+          <Box className="flex items-center gap-2">
+            <Box>
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  color: 'var(--text-primary)',
+                  fontWeight: 600,
+                  mb: 0.5
+                }}
+              >
+                Evolução de Vendas
+              </Typography>
+              <Typography 
+                variant="body2" 
+                sx={{ color: 'var(--text-secondary)' }}
+              >
+                Comparativo anual de performance
+              </Typography>
+            </Box>
+            <IconButton 
+              size="small"
+              onClick={() => setInfoOpen(true)}
               sx={{ 
-                color: 'var(--text-primary)',
-                fontWeight: 600,
-                mb: 0.5
+                color: 'var(--text-secondary)',
+                '&:hover': { color: 'var(--color-primary)' }
               }}
             >
-              Evolução de Vendas
-            </Typography>
-            <Typography 
-              variant="body2" 
-              sx={{ color: 'var(--text-secondary)' }}
-            >
-              Comparativo anual de performance
-            </Typography>
+              <InfoOutlined fontSize="small" />
+            </IconButton>
           </Box>
           
           <Box className="flex items-center gap-2 flex-wrap">
@@ -209,5 +237,6 @@ export default function VendasChart() {
         </Box>
       </CardContent>
     </Card>
+    </>
   );
 }

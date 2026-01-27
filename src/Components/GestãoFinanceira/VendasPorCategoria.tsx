@@ -1,6 +1,9 @@
-import { Card, CardContent, Typography, Box } from '@mui/material';
+import { Card, CardContent, Typography, Box, IconButton } from '@mui/material';
+import { InfoOutlined } from '@mui/icons-material';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { useState } from 'react';
 import DateRangeFilter from './DateRangeFilter';
+import InfoModal from './InfoModal';
 
 const categoriaData = [
   { name: 'Auto', value: 185000, color: '#2563eb' },
@@ -65,8 +68,22 @@ const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent
 
 export default function VendasPorCategoria() {
   const total = categoriaData.reduce((acc, item) => acc + item.value, 0);
+  const [infoOpen, setInfoOpen] = useState(false);
 
   return (
+    <>
+    <InfoModal 
+      open={infoOpen}
+      onClose={() => setInfoOpen(false)}
+      title="Vendas por Categoria"
+      description="Este gráfico de pizza apresenta a distribuição proporcional das vendas entre as diferentes categorias de seguros oferecidas."
+      details={[
+        "Cada fatia representa uma categoria de seguro (Auto, Vida, Residencial, Empresarial, Outros)",
+        "O tamanho da fatia é proporcional ao volume de vendas da categoria",
+        "Os percentuais mostram a participação de cada categoria no total de vendas",
+        "Use este gráfico para identificar quais produtos têm maior demanda e planejar estratégias comerciais"
+      ]}
+    />
     <Card 
       sx={{ 
         backgroundColor: 'var(--bg-card)',
@@ -77,23 +94,35 @@ export default function VendasPorCategoria() {
     >
       <CardContent>
         <Box className="flex items-center justify-between mb-4 flex-wrap gap-3">
-          <Box>
-            <Typography 
-              variant="h6" 
+          <Box className="flex items-center gap-2">
+            <Box>
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  color: 'var(--text-primary)',
+                  fontWeight: 600,
+                  mb: 0.5
+                }}
+              >
+                Vendas por Categoria
+              </Typography>
+              <Typography 
+                variant="body2" 
+                sx={{ color: 'var(--text-secondary)' }}
+              >
+                Distribuição de produtos vendidos
+              </Typography>
+            </Box>
+            <IconButton 
+              size="small"
+              onClick={() => setInfoOpen(true)}
               sx={{ 
-                color: 'var(--text-primary)',
-                fontWeight: 600,
-                mb: 0.5
+                color: 'var(--text-secondary)',
+                '&:hover': { color: 'var(--color-primary)' }
               }}
             >
-              Vendas por Categoria
-            </Typography>
-            <Typography 
-              variant="body2" 
-              sx={{ color: 'var(--text-secondary)' }}
-            >
-              Distribuição de produtos vendidos
-            </Typography>
+              <InfoOutlined fontSize="small" />
+            </IconButton>
           </Box>
           
           <DateRangeFilter />
@@ -151,5 +180,6 @@ export default function VendasPorCategoria() {
         </Box>
       </CardContent>
     </Card>
+    </>
   );
 }

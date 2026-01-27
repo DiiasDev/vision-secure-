@@ -1,5 +1,5 @@
-import { Card, CardContent, Typography, Box, CircularProgress } from '@mui/material';
-import { TrendingUp, TrendingDown, AttachMoney, People, Assignment, CompareArrows } from '@mui/icons-material';
+import { Card, CardContent, Typography, Box, CircularProgress, IconButton, Tooltip } from '@mui/material';
+import { TrendingUp, TrendingDown, AttachMoney, People, Assignment, CompareArrows, InfoOutlined } from '@mui/icons-material';
 import { Financeiro } from '../../Services/Financeiro';
 import { useState, useEffect } from 'react';
 
@@ -9,9 +9,10 @@ interface KpiCardProps {
   change: number;
   icon: React.ReactNode;
   color: string;
+  description?: string;
 }
 
-const KpiCard = ({ title, value, change, icon, color }: KpiCardProps) => {
+const KpiCard = ({ title, value, change, icon, color, description }: KpiCardProps) => {
   const isPositive = change >= 0;
   
   return (
@@ -25,19 +26,50 @@ const KpiCard = ({ title, value, change, icon, color }: KpiCardProps) => {
     >
       <CardContent>
         <Box className="flex items-start justify-between mb-4">
-          <Box 
-            sx={{ 
-              backgroundColor: `${color}15`,
-              borderRadius: 2,
-              padding: 1.5,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            <Box sx={{ color: color, display: 'flex' }}>
-              {icon}
+          <Box className="flex items-center gap-2">
+            <Box 
+              sx={{ 
+                backgroundColor: `${color}15`,
+                borderRadius: 2,
+                padding: 1.5,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <Box sx={{ color: color, display: 'flex' }}>
+                {icon}
+              </Box>
             </Box>
+            {description && (
+              <Tooltip 
+                title={description}
+                placement="top"
+                arrow
+                sx={{
+                  '& .MuiTooltip-tooltip': {
+                    backgroundColor: 'var(--bg-card)',
+                    color: 'var(--text-primary)',
+                    border: '1px solid var(--border-default)',
+                    fontSize: '0.875rem',
+                    maxWidth: 300
+                  },
+                  '& .MuiTooltip-arrow': {
+                    color: 'var(--bg-card)',
+                  }
+                }}
+              >
+                <IconButton 
+                  size="small"
+                  sx={{ 
+                    color: 'var(--text-tertiary)',
+                    '&:hover': { color: 'var(--color-primary)' }
+                  }}
+                >
+                  <InfoOutlined fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
           </Box>
           <Box className="flex items-center gap-1">
             {isPositive ? (
@@ -136,28 +168,32 @@ export default function KpiCards() {
       value: formatCurrency(receitaTotal),
       change: 12.5,
       icon: <AttachMoney sx={{ fontSize: 28 }} />,
-      color: '#16a34a'
+      color: '#16a34a',
+      description: 'Soma de todas as receitas geradas no período selecionado, incluindo vendas e comissões recebidas.'
     },
     {
       title: 'Total de Vendas',
       value: totalVendas.toString(),
       change: 8.3,
       icon: <Assignment sx={{ fontSize: 28 }} />,
-      color: '#2563eb'
+      color: '#2563eb',
+      description: 'Número total de apólices vendidas no período. Indica o volume de negócios fechados.'
     },
     {
       title: 'Corretores Ativos',
-      value: corretores,
+      value: corretores.toString(),
       change: 5.2,
       icon: <People sx={{ fontSize: 28 }} />,
-      color: '#8b5cf6'
+      color: '#8b5cf6',
+      description: 'Quantidade de corretores que realizaram ao menos uma venda no período analisado.'
     },
     {
       title: 'Ticket Médio',
       value: formatCurrency(ticketMedio),
       change: -2.1,
       icon: <CompareArrows sx={{ fontSize: 28 }} />,
-      color: '#d97706'
+      color: '#d97706',
+      description: 'Valor médio por apólice vendida. Calculado dividindo a receita total pelo número de vendas.'
     }
   ];
 

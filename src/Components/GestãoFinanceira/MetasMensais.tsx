@@ -1,6 +1,8 @@
-import { Card, CardContent, Typography, Box, LinearProgress } from '@mui/material';
-import { CheckCircle, Cancel, Schedule } from '@mui/icons-material';
+import { Card, CardContent, Typography, Box, LinearProgress, IconButton } from '@mui/material';
+import { CheckCircle, Cancel, Schedule, InfoOutlined } from '@mui/icons-material';
+import { useState } from 'react';
 import DateRangeFilter from './DateRangeFilter';
+import InfoModal from './InfoModal';
 
 interface Meta {
   mes: string;
@@ -133,8 +135,23 @@ export default function MetasMensais() {
   const metasAtingidas = metasData.filter(m => m.status === 'atingida').length;
   const totalMeses = metasData.filter(m => m.status !== 'em-andamento').length;
   const taxaSucesso = ((metasAtingidas / totalMeses) * 100).toFixed(1);
+  const [infoOpen, setInfoOpen] = useState(false);
 
   return (
+    <>
+    <InfoModal 
+      open={infoOpen}
+      onClose={() => setInfoOpen(false)}
+      title="Metas Mensais"
+      description="Acompanhamento detalhado do cumprimento de metas estabelecidas para cada mês, permitindo avaliar a consistência do desempenho ao longo do ano."
+      details={[
+        "Ícone verde (check): Meta atingida - vendas superaram ou alcançaram o objetivo",
+        "Ícone vermelho (X): Meta não atingida - vendas abaixo do esperado",
+        "Ícone amarelo (relógio): Mês em andamento - ainda em processo",
+        "A barra de progresso mostra visualmente o percentual de cumprimento da meta",
+        "A taxa de sucesso no topo indica o percentual de metas alcançadas no período"
+      ]}
+    />
     <Card 
       sx={{ 
         backgroundColor: 'var(--bg-card)',
@@ -145,23 +162,35 @@ export default function MetasMensais() {
     >
       <CardContent>
         <Box className="flex items-center justify-between mb-4 flex-wrap gap-3">
-          <Box>
-            <Typography 
-              variant="h6" 
+          <Box className="flex items-center gap-2">
+            <Box>
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  color: 'var(--text-primary)',
+                  fontWeight: 600,
+                  mb: 0.5
+                }}
+              >
+                Metas Mensais
+              </Typography>
+              <Typography 
+                variant="body2" 
+                sx={{ color: 'var(--text-secondary)' }}
+              >
+                Acompanhamento anual de metas
+              </Typography>
+            </Box>
+            <IconButton 
+              size="small"
+              onClick={() => setInfoOpen(true)}
               sx={{ 
-                color: 'var(--text-primary)',
-                fontWeight: 600,
-                mb: 0.5
+                color: 'var(--text-secondary)',
+                '&:hover': { color: 'var(--color-primary)' }
               }}
             >
-              Metas Mensais
-            </Typography>
-            <Typography 
-              variant="body2" 
-              sx={{ color: 'var(--text-secondary)' }}
-            >
-              Acompanhamento anual de metas
-            </Typography>
+              <InfoOutlined fontSize="small" />
+            </IconButton>
           </Box>
           
           <Box className="flex items-center gap-3">
@@ -194,5 +223,6 @@ export default function MetasMensais() {
         </Box>
       </CardContent>
     </Card>
+    </>
   );
 }

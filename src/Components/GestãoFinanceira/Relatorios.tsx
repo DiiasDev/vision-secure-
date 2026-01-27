@@ -18,7 +18,9 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions
+  DialogActions,
+  IconButton,
+  Tooltip
 } from '@mui/material';
 import {
   Download,
@@ -29,7 +31,8 @@ import {
   Visibility,
   CalendarMonth,
   Category,
-  AttachMoney
+  AttachMoney,
+  InfoOutlined
 } from '@mui/icons-material';
 import {
   LineChart,
@@ -855,16 +858,32 @@ export default function Relatorios() {
         <Box>
           <Card sx={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-default)' }}>
             <CardContent>
-              <Typography
-                variant="h6"
-                sx={{
-                  color: 'var(--text-primary)',
-                  fontWeight: 600,
-                  mb: 3
-                }}
-              >
-                Evolução de Vendas (Últimos 7 meses)
-              </Typography>
+              <Box className="flex items-center justify-between mb-3">
+                <Typography
+                  variant="h6"
+                  sx={{
+                    color: 'var(--text-primary)',
+                    fontWeight: 600
+                  }}
+                >
+                  Evolução de Vendas (Últimos 7 meses)
+                </Typography>
+                <Tooltip 
+                  title="Gráfico de linha que mostra a evolução do volume de vendas mês a mês. Permite identificar tendências de crescimento ou queda e sazonalidades no negócio."
+                  placement="top"
+                  arrow
+                >
+                  <IconButton 
+                    size="small"
+                    sx={{ 
+                      color: 'var(--text-secondary)',
+                      '&:hover': { color: 'var(--color-primary)' }
+                    }}
+                  >
+                    <InfoOutlined fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={dadosVendasMes}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border-default)" />
@@ -907,16 +926,32 @@ export default function Relatorios() {
         <Box>
           <Card sx={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-default)' }}>
             <CardContent>
-              <Typography
-                variant="h6"
-                sx={{
-                  color: 'var(--text-primary)',
-                  fontWeight: 600,
-                  mb: 3
-                }}
-              >
-                Vendas por Categoria
-              </Typography>
+              <Box className="flex items-center justify-between mb-3">
+                <Typography
+                  variant="h6"
+                  sx={{
+                    color: 'var(--text-primary)',
+                    fontWeight: 600
+                  }}
+                >
+                  Vendas por Categoria
+                </Typography>
+                <Tooltip 
+                  title="Gráfico de pizza que apresenta a distribuição proporcional das vendas entre diferentes categorias de seguros. Os percentuais facilitam a identificação das categorias mais representativas."
+                  placement="top"
+                  arrow
+                >
+                  <IconButton 
+                    size="small"
+                    sx={{ 
+                      color: 'var(--text-secondary)',
+                      '&:hover': { color: 'var(--color-primary)' }
+                    }}
+                  >
+                    <InfoOutlined fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie

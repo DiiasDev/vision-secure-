@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Card, CardContent, Typography, Box, Avatar, LinearProgress, Chip, ToggleButton, ToggleButtonGroup } from '@mui/material';
-import { EmojiEvents, TrendingUp, TrendingDown, ViewList, BarChart as BarChartIcon, ShowChart } from '@mui/icons-material';
+import { Card, CardContent, Typography, Box, Avatar, LinearProgress, Chip, ToggleButton, ToggleButtonGroup, IconButton } from '@mui/material';
+import { EmojiEvents, TrendingUp, TrendingDown, ViewList, BarChart as BarChartIcon, ShowChart, InfoOutlined } from '@mui/icons-material';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import DateRangeFilter from './DateRangeFilter';
 import CorretorFilter from './CorretorFilter';
+import InfoModal from './InfoModal';
 
 interface Corretor {
   id: number;
@@ -181,6 +182,7 @@ const CorretorCard = ({ corretor }: { corretor: Corretor }) => {
 
 export default function RankingCorretores() {
   const [viewMode, setViewMode] = useState<'list' | 'bar' | 'line'>('list');
+  const [infoOpen, setInfoOpen] = useState(false);
 
   const handleViewChange = (_: React.MouseEvent<HTMLElement>, newView: 'list' | 'bar' | 'line' | null) => {
     if (newView !== null) {
@@ -225,6 +227,20 @@ export default function RankingCorretores() {
   };
 
   return (
+    <>
+    <InfoModal 
+      open={infoOpen}
+      onClose={() => setInfoOpen(false)}
+      title="Ranking de Corretores"
+      description="Visualização completa do desempenho dos corretores, destacando os top performers e oferecendo múltiplas formas de análise."
+      details={[
+        "Os 3 primeiros colocados recebem medalhas de destaque (ouro, prata e bronze)",
+        "Cada corretor mostra vendas totais, percentual de crescimento e progresso em relação à meta",
+        "Visualização em Lista: Mostra cards detalhados com todas as métricas",
+        "Visualização em Barras: Compara vendas vs metas em gráfico",
+        "Visualização em Linha: Mostra tendência e evolução do desempenho"
+      ]}
+    />
     <Card 
       sx={{ 
         backgroundColor: 'var(--bg-card)',
@@ -235,23 +251,35 @@ export default function RankingCorretores() {
     >
       <CardContent>
         <Box className="flex items-center justify-between mb-4 flex-wrap gap-3">
-          <Box>
-            <Typography 
-              variant="h6" 
+          <Box className="flex items-center gap-2">
+            <Box>
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  color: 'var(--text-primary)',
+                  fontWeight: 600,
+                  mb: 0.5
+                }}
+              >
+                Ranking de Corretores
+              </Typography>
+              <Typography 
+                variant="body2" 
+                sx={{ color: 'var(--text-secondary)' }}
+              >
+                Top performers do período
+              </Typography>
+            </Box>
+            <IconButton 
+              size="small"
+              onClick={() => setInfoOpen(true)}
               sx={{ 
-                color: 'var(--text-primary)',
-                fontWeight: 600,
-                mb: 0.5
+                color: 'var(--text-secondary)',
+                '&:hover': { color: 'var(--color-primary)' }
               }}
             >
-              Ranking de Corretores
-            </Typography>
-            <Typography 
-              variant="body2" 
-              sx={{ color: 'var(--text-secondary)' }}
-            >
-              Top performers do período
-            </Typography>
+              <InfoOutlined fontSize="small" />
+            </IconButton>
           </Box>
           
           <Box className="flex items-center gap-2 flex-wrap">
@@ -377,5 +405,6 @@ export default function RankingCorretores() {
         )}
       </CardContent>
     </Card>
+    </>
   );
 }
