@@ -19,6 +19,7 @@ export interface seguro {
   inicio_vigencia: string;
   fim_vigencia: string;
   valor_premio: number;
+  valor_do_seguro: number;
   valor_franquia: number;
   forma_pagamento: "À Vista" | "Mensal" | "Trimestral" | "Semestral" | "Anual";
   situacao_pagamento: "Pendente" | "Em Dia" | "Atrasado" | "Cancelado";

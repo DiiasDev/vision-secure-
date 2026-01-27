@@ -1,5 +1,7 @@
-import { Card, CardContent, Typography, Box } from '@mui/material';
+import { Card, CardContent, Typography, Box, CircularProgress } from '@mui/material';
 import { TrendingUp, TrendingDown, AttachMoney, People, Assignment, CompareArrows } from '@mui/icons-material';
+import { Financeiro } from '../../Services/Financeiro';
+import { useState, useEffect } from 'react';
 
 interface KpiCardProps {
   title: string;
@@ -81,31 +83,78 @@ const KpiCard = ({ title, value, change, icon, color }: KpiCardProps) => {
 };
 
 export default function KpiCards() {
+  const [loading, setLoading] = useState(true);
+  const [receitaTotal, setReceitaTotal] = useState(0);
+  const [totalVendas, setTotalVendas] = useState(0);
+  const [ticketMedio, setTicketMedio] = useState(0);
+  const [corretores, setCorretores] = useState(0);
+
+  useEffect(() => {
+    const carregarDados = async () => {
+      try {
+        setLoading(true);
+        const financeiro = new Financeiro();
+        const [receita, vendas, ticket, corretores] = await Promise.all([
+          financeiro.getReceitasTotal(),
+          financeiro.getTotalVendas(),
+          financeiro.getTicketMedio(),
+          financeiro.corretoresAtivos()
+        ]);
+        
+        setReceitaTotal(receita);
+        setTotalVendas(vendas);
+        setTicketMedio(ticket);
+        setCorretores(corretores);
+      } catch (error) {
+        console.error('Erro ao carregar dados financeiros:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    carregarDados();
+  }, []);
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(value);
+  };
+
+  if (loading) {
+    return (
+      <Box className="flex justify-center items-center" sx={{ minHeight: '200px' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   const kpis = [
     {
       title: 'Receita Total',
-      value: 'R$ 487.500',
+      value: formatCurrency(receitaTotal),
       change: 12.5,
       icon: <AttachMoney sx={{ fontSize: 28 }} />,
       color: '#16a34a'
     },
     {
       title: 'Total de Vendas',
-      value: '156',
+      value: totalVendas.toString(),
       change: 8.3,
       icon: <Assignment sx={{ fontSize: 28 }} />,
       color: '#2563eb'
     },
     {
       title: 'Corretores Ativos',
-      value: '24',
+      value: corretores,
       change: 5.2,
       icon: <People sx={{ fontSize: 28 }} />,
       color: '#8b5cf6'
     },
     {
       title: 'Ticket Médio',
-      value: 'R$ 3.125',
+      value: formatCurrency(ticketMedio),
       change: -2.1,
       icon: <CompareArrows sx={{ fontSize: 28 }} />,
       color: '#d97706'

@@ -2,6 +2,9 @@ import { useState } from "react";
 import { Box, Tabs, Tab } from "@mui/material";
 import GestaoFinanceira from "../../Components/GestãoFinanceira/gestãoFinanceira";
 import GestaoMetas from "../../Components/GestãoFinanceira/GestaoMetas";
+import Acerto from "../../Components/GestãoFinanceira/Acerto";
+import Backup from "../../Components/GestãoFinanceira/Backup";
+import Relatorios from "../../Components/GestãoFinanceira/Relatorios";
 
 export default function Financeiro() {
   const [activeTab, setActiveTab] = useState(0);
@@ -46,7 +49,7 @@ export default function Financeiro() {
         >
           <Tab label="Dashboard Financeiro" />
           <Tab label="Acerto" />
-          <Tab label="Comissões" />
+          <Tab label="Backup" />
           <Tab label="Metas" />
           <Tab label="Relatórios" />
         </Tabs>
@@ -55,28 +58,10 @@ export default function Financeiro() {
       {/* Tab Content */}
       <Box>
         {activeTab === 0 && <GestaoFinanceira />}
-        {activeTab === 1 && (
-          <Box className="p-6">
-            <Box sx={{ color: 'var(--text-primary)' }}>
-              Conteúdo de Acerto (a ser implementado)
-            </Box>
-          </Box>
-        )}
-        {activeTab === 2 && (
-          <Box className="p-6">
-            <Box sx={{ color: 'var(--text-primary)' }}>
-              Conteúdo de Comissões (a ser implementado)
-            </Box>
-          </Box>
-        )}
+        {activeTab === 1 && <Acerto />}
+        {activeTab === 2 && <Backup />}
         {activeTab === 3 && <GestaoMetas />}
-        {activeTab === 4 && (
-          <Box className="p-6">
-            <Box sx={{ color: 'var(--text-primary)' }}>
-              Conteúdo de Relatórios (a ser implementado)
-            </Box>
-          </Box>
-        )}
+        {activeTab === 4 && <Relatorios />}
       </Box>
     </Box>
   );

@@ -101,6 +101,14 @@ export const camposSeguros: Field[] = [
         section: 'Valores'
     },
     {
+        fieldname: 'valor_do_seguro',
+        label: 'Valor do Seguro',
+        fieldtype: 'Float',
+        placeholder: '0.00',
+        required: true,
+        section: 'Valores'
+    },
+    {
         fieldname: 'valor_franquia',
         label: 'Valor da Franquia',
         fieldtype: 'Float',

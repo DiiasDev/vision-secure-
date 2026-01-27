@@ -993,6 +993,17 @@ export function SegurosTable({ seguros, onEdit, onDelete }: SegurosTableProps) {
                               </div>
                               <div className="flex justify-between items-center pb-2 border-b" style={{ borderColor: 'var(--border-default)' }}>
                                 <span className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                                  Valor do Seguro:
+                                </span>
+                                <span
+                                  className="text-sm font-semibold"
+                                  style={{ color: 'var(--text-primary)' }}
+                                >
+                                  {formatCurrency(seguro.valor_do_seguro || 0)}
+                                </span>
+                              </div>
+                              <div className="flex justify-between items-center pb-2 border-b" style={{ borderColor: 'var(--border-default)' }}>
+                                <span className="text-sm" style={{ color: 'var(--text-muted)' }}>
                                   Franquia:
                                 </span>
                                 <span
