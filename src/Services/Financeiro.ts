@@ -1,5 +1,6 @@
 import { getSeguros } from "./Seguros";
 import { getCorretor } from "./corretores";
+import { frappe } from "./frappeClient";
 
 export class Financeiro {
   constructor() {}
@@ -10,6 +11,19 @@ export class Financeiro {
       return acc + (seguro.valor_do_seguro || 0);
     }, 0);
     return total;
+  }
+
+  async getEvolucaovendas() {
+    const response = await frappe.get(
+      "/method/vision_secure.seguros.doctype.seguros.seguros.data_evolucao_vendas"
+    );
+    const { dados } = response.data.message || {};
+    return dados.map((item: any) => ({
+      mes: item.mes,
+      vendas: item.vendas_atuais ?? item.total_vendas ?? 0,
+      meta: item.meta ?? 0,
+      ano_anterior: item.total_ano_anterior ?? 0,
+    }));
   }
 
   async getTotalVendas(): Promise<number> {
@@ -29,15 +43,19 @@ export class Financeiro {
   async corretoresAtivos(): Promise<number> {
     try {
       const corretores = await getCorretor();
-      
+
       if (!corretores || corretores.length === 0) {
         console.log("Nenhum corretor encontrado");
         return 0;
       }
 
-      const ativos = corretores.filter(corretor => corretor.status === "Ativo");
-      
-      console.log(`Total de corretores: ${corretores.length}, Ativos: ${ativos.length}`);
+      const ativos = corretores.filter(
+        (corretor) => corretor.status === "Ativo",
+      );
+
+      console.log(
+        `Total de corretores: ${corretores.length}, Ativos: ${ativos.length}`,
+      );
       return ativos.length;
     } catch (error: any) {
       console.error("Erro ao buscar corretores:", error);
