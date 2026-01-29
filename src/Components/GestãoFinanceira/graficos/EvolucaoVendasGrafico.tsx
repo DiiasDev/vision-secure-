@@ -62,7 +62,12 @@ export default function EvolucaoVendasGrafico({
   const [infoOpen, setInfoOpen] = useState(false);
   const [data, setData] = useState<VendaData[]>([]);
   const [allData, setAllData] = useState<VendaData[]>([]);
-  const [dateRange, setDateRange] = useState<{start: Dayjs|null, end: Dayjs|null}>({start: dayjs().subtract(30, 'days'), end: dayjs()});
+  // Inicializa do primeiro dia do ano até hoje
+  const [dateRange, setDateRange] = useState<{start: Dayjs|null, end: Dayjs|null}>(() => {
+    const today = dayjs();
+    const firstDayOfYear = dayjs().startOf('year');
+    return { start: firstDayOfYear, end: today };
+  });
   // const [categorias, setCategorias] = useState<string[]>([]);
   // const [corretores, setCorretores] = useState<string[]>([]);
 
