@@ -13,16 +13,20 @@ export class Financeiro {
     return total;
   }
 
-  async getEvolucaovendas() {
+  async getEvolucaovendas(startDate?: string, endDate?: string) {
+    const params: any = {};
+    if (startDate) params.start_date = startDate;
+    if (endDate) params.end_date = endDate;
     const response = await frappe.get(
-      "/method/vision_secure.seguros.doctype.seguros.seguros.data_evolucao_vendas"
+      "/method/vision_secure.seguros.doctype.seguros.seguros.data_evolucao_vendas",
+      { params }
     );
     const { dados } = response.data.message || {};
     return dados.map((item: any) => ({
       mes: item.mes,
       vendas: item.vendas_atuais ?? item.total_vendas ?? 0,
       meta: item.meta ?? 0,
-      ano_anterior: item.total_ano_anterior ?? 0,
+      ano_anterior: item.ano_anterior ?? 0,
     }));
   }
 

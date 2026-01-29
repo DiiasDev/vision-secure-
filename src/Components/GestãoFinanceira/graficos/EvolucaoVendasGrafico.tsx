@@ -5,6 +5,12 @@ import InfoModal from '../InfoModal';
 import { useEffect, useState } from "react";
 import { Financeiro } from '../../../Services/Financeiro';
 import { formatCurrency } from '../../../Utils/Formatter';
+import DateRangeFilter from '../DateRangeFilter';
+// import CategoriaFilter from '../CategoriaFilter';
+// import CorretorFilter from '../CorretorFilter';
+import dayjs, { Dayjs } from 'dayjs';
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
+dayjs.extend(isSameOrBefore);
 
 interface VendaData {
   mes: string;
@@ -12,7 +18,6 @@ interface VendaData {
   meta: number;
   ano_anterior: number;
 }
-
 interface EvolucaoVendasGraficoProps {
   data: VendaData[];
   loading?: boolean;
@@ -56,35 +61,64 @@ export default function EvolucaoVendasGrafico({
   const [chartType, setChartType] = useState<'area' | 'line'>('area');
   const [infoOpen, setInfoOpen] = useState(false);
   const [data, setData] = useState<VendaData[]>([]);
-  
- useEffect(() => {
+  const [allData, setAllData] = useState<VendaData[]>([]);
+  const [dateRange, setDateRange] = useState<{start: Dayjs|null, end: Dayjs|null}>({start: dayjs().subtract(30, 'days'), end: dayjs()});
+  // const [categorias, setCategorias] = useState<string[]>([]);
+  // const [corretores, setCorretores] = useState<string[]>([]);
+
+  useEffect(() => {
     const financeiro = new Financeiro();
-    financeiro.getEvolucaovendas()
-      .then(setData)
-  }, []);
+    const start = dateRange.start ? dateRange.start.format('YYYY-MM-DD') : undefined;
+    const end = dateRange.end ? dateRange.end.format('YYYY-MM-DD') : undefined;
+    financeiro.getEvolucaovendas(start, end)
+      .then((dados) => {
+        console.log('[EvolucaoVendasGrafico] Dados recebidos do backend:', dados);
+        setAllData(dados);
+      });
+  }, [dateRange]);
 
-  if (error) {
-    return (
-      <Card sx={{ backgroundColor: 'var(--bg-card)', borderRadius: 2, border: '1px solid var(--border-default)' }}>
-        <CardContent>
-          <Typography color="error">Erro ao carregar dados: {error}</Typography>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (loading) {
-    return (
-      <Card sx={{ backgroundColor: 'var(--bg-card)', borderRadius: 2, border: '1px solid var(--border-default)' }}>
-        <CardContent>
-          <Typography>Carregando...</Typography>
-        </CardContent>
-      </Card>
-    );
-  }
+  // Filtra os meses do período selecionado
+  useEffect(() => {
+    if (!dateRange.start || !dateRange.end) {
+      setData([]);
+      return;
+    }
+    // Gera a lista de meses do range, do mais antigo ao mais recente, formato MM/YYYY
+    const meses = [];
+    let d = dateRange.start.startOf('month');
+    while (d.isSameOrBefore(dateRange.end, 'month')) {
+      meses.push(d.format('MM/YYYY'));
+      d = d.add(1, 'month');
+    }
+    // Monta o array de dados do gráfico na ordem dos meses do range
+    const dataFiltrada = meses.map(mes => {
+      const found = allData.find(item => item.mes === mes);
+      return found || {
+        mes,
+        vendas: 0,
+        meta: 0,
+        ano_anterior: 0
+      };
+    });
+    setData(dataFiltrada);
+  }, [allData, dateRange]);
 
   return (
     <>
+      {error && (
+        <Card sx={{ backgroundColor: 'var(--bg-card)', borderRadius: 2, border: '1px solid var(--border-default)' }}>
+          <CardContent>
+            <Typography color="error">Erro ao carregar dados: {error}</Typography>
+          </CardContent>
+        </Card>
+      )}
+      {loading && (
+        <Card sx={{ backgroundColor: 'var(--bg-card)', borderRadius: 2, border: '1px solid var(--border-default)' }}>
+          <CardContent>
+            <Typography>Carregando dados...</Typography>
+          </CardContent>
+        </Card>
+      )}
       <InfoModal 
         open={infoOpen}
         onClose={() => setInfoOpen(false)}
@@ -106,6 +140,10 @@ export default function EvolucaoVendasGrafico({
         }}
       >
         <CardContent>
+          {/* Filtro de data do gráfico */}
+          <Box className="flex flex-wrap gap-3 mb-4 items-center">
+            <DateRangeFilter onDateRangeChange={(start, end) => setDateRange({start, end})} />
+          </Box>
           <Box className="flex items-center justify-between mb-4 flex-wrap gap-3">
             <Box className="flex items-center gap-2">
               <Box>
@@ -137,7 +175,6 @@ export default function EvolucaoVendasGrafico({
                 <InfoOutlined fontSize="small" />
               </IconButton>
             </Box>
-            
             <Tabs 
               value={chartType} 
               onChange={(_, newValue) => setChartType(newValue)}

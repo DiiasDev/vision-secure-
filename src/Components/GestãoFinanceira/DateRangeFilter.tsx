@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Box, Button, Popover, Typography, Chip, IconButton } from '@mui/material';
+import { Box, Button, Popover, Typography, Chip, IconButton, useTheme } from '@mui/material';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { CalendarToday, Close } from '@mui/icons-material';
@@ -11,10 +11,11 @@ interface DateRangeFilterProps {
 }
 
 export default function DateRangeFilter({ onDateRangeChange }: DateRangeFilterProps) {
+  const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const [startDate, setStartDate] = useState<Dayjs | null>(dayjs().subtract(30, 'days'));
   const [endDate, setEndDate] = useState<Dayjs | null>(dayjs());
-  const [selectedPreset, setSelectedPreset] = useState<string>('30dias');
+  const [selectedPreset, setSelectedPreset] = useState<string>('1mes');
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -27,11 +28,10 @@ export default function DateRangeFilter({ onDateRangeChange }: DateRangeFilterPr
   const open = Boolean(anchorEl);
 
   const presets = [
-    { label: '15 Dias', value: '15dias', days: 15 },
-    { label: '30 Dias', value: '30dias', days: 30 },
     { label: '1 Mês', value: '1mes', days: 30 },
-    { label: '2 Meses', value: '2meses', days: 60 },
     { label: '3 Meses', value: '3meses', days: 90 },
+    { label: '6 Meses', value: '6meses', days: 180 },
+    { label: '1 Ano', value: '1ano', days: 365 },
   ];
 
   const handlePresetClick = (preset: typeof presets[0]) => {
@@ -73,7 +73,7 @@ export default function DateRangeFilter({ onDateRangeChange }: DateRangeFilterPr
         startIcon={<CalendarToday sx={{ fontSize: 18 }} />}
         onClick={handleClick}
         sx={{
-          color: 'var(--text-primary)',
+          color: theme.palette.mode === 'dark' ? 'var(--text-primary)' : 'var(--text-primary)',
           borderColor: 'var(--border-default)',
           backgroundColor: 'var(--bg-card)',
           textTransform: 'none',
@@ -108,8 +108,34 @@ export default function DateRangeFilter({ onDateRangeChange }: DateRangeFilterPr
             border: '1px solid var(--border-default)',
             boxShadow: 'var(--shadow-lg)',
             marginTop: 1,
-            minWidth: 400
-          }
+            minWidth: 400,
+            color: 'var(--text-primary)',
+          },
+          // Calendário do MUI X DatePicker
+          '& .MuiPickersDay-root': {
+            color: 'var(--text-primary)',
+            backgroundColor: 'transparent',
+          },
+          '& .MuiPickersDay-root.Mui-selected': {
+            backgroundColor: 'var(--color-primary) !important',
+            color: 'var(--text-inverse) !important',
+          },
+          '& .MuiPickersCalendarHeader-label': {
+            color: 'var(--text-primary)',
+          },
+          '& .MuiPickersArrowSwitcher-button': {
+            color: 'var(--text-primary)',
+          },
+          '& .MuiPickersDay-today': {
+            borderColor: 'var(--color-primary)',
+          },
+          '& .MuiInputBase-root': {
+            backgroundColor: 'var(--input-bg)',
+            color: 'var(--input-text)',
+          },
+          '& .MuiInputLabel-root': {
+            color: 'var(--text-secondary)',
+          },
         }}
       >
         <Box sx={{ p: 3 }}>
@@ -152,20 +178,32 @@ export default function DateRangeFilter({ onDateRangeChange }: DateRangeFilterPr
                   key={preset.value}
                   label={preset.label}
                   onClick={() => handlePresetClick(preset)}
-                  sx={{
-                    backgroundColor: selectedPreset === preset.value 
-                      ? 'var(--color-primary)' 
-                      : 'var(--bg-hover)',
-                    color: selectedPreset === preset.value 
-                      ? 'white' 
-                      : 'var(--text-primary)',
+                  sx={theme => ({
+                    backgroundColor: selectedPreset === preset.value
+                      ? theme.palette.mode === 'dark'
+                        ? 'var(--color-primary)'
+                        : 'var(--color-primary)'
+                      : theme.palette.mode === 'dark'
+                        ? 'var(--bg-hover)'
+                        : 'var(--bg-hover)',
+                    color: selectedPreset === preset.value
+                      ? theme.palette.mode === 'dark'
+                        ? 'var(--text-inverse)'
+                        : 'var(--text-inverse)'
+                      : theme.palette.mode === 'dark'
+                        ? 'var(--text-primary)'
+                        : 'var(--text-primary)',
                     fontWeight: selectedPreset === preset.value ? 600 : 500,
                     '&:hover': {
-                      backgroundColor: selectedPreset === preset.value 
-                        ? 'var(--color-primary-hover)' 
-                        : 'var(--bg-tertiary)',
+                      backgroundColor: selectedPreset === preset.value
+                        ? theme.palette.mode === 'dark'
+                          ? 'var(--color-primary-hover)'
+                          : 'var(--color-primary-hover)'
+                        : theme.palette.mode === 'dark'
+                          ? 'var(--bg-tertiary)'
+                          : 'var(--bg-tertiary)',
                     }
-                  }}
+                  })}
                 />
               ))}
             </Box>
@@ -213,7 +251,9 @@ export default function DateRangeFilter({ onDateRangeChange }: DateRangeFilterPr
                         },
                         '& .MuiInputBase-input': {
                           color: 'var(--text-primary)',
-                        }
+                        },
+                        // Adaptação para dark/light
+                        colorScheme: theme.palette.mode,
                       }
                     }
                   }}
@@ -246,7 +286,8 @@ export default function DateRangeFilter({ onDateRangeChange }: DateRangeFilterPr
                         },
                         '& .MuiInputBase-input': {
                           color: 'var(--text-primary)',
-                        }
+                        },
+                        colorScheme: theme.palette.mode,
                       }
                     }
                   }}
