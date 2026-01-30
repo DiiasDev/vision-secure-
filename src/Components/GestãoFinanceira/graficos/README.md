@@ -68,16 +68,12 @@ Gráfico de pizza mostrando distribuição de vendas por categoria.
 ### 4. **VendasPorCategoriaCorretorGrafico.tsx**
 Gráfico de barras empilhadas mostrando vendas por categoria segmentadas por corretor.
 
-**Props:**
-- `data`: Array de objetos com `{corretor, auto, vida, residencial, empresarial, outros}`
-- `loading?`: Estado de carregamento
-- `error?`: Mensagem de erro
+**Dados:**
+- Consome dados reais via backend (sem props).
 
 **Uso:**
 ```tsx
-<VendasPorCategoriaCorretorGrafico 
-  data={vendasPorCategoriaData}
-/>
+<VendasPorCategoriaCorretorGrafico />
 ```
 
 ---

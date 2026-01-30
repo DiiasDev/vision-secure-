@@ -85,34 +85,34 @@ export function formatCEP(cep: string): string {
 /**
  * Formata um valor monetário em Real brasileiro
  * @param value - Valor a ser formatado
+ * @param decimals - Número de casas decimais (padrão: 2)
  * @returns Valor formatado R$ x.xxx,xx
  */
-export function formatCurrency(value: number | string): string {
-  const numValue = typeof value === 'string' ? parseFloat(value) : value;
+export function formatCurrency(
+  value: number | string | null | undefined,
+  decimals: number = 2
+): string {
+  const numValue =
+    typeof value === 'string' ? parseFloat(value) : value ?? 0;
   
   if (isNaN(numValue)) return 'R$ 0,00';
   
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
   }).format(numValue);
 }
 
 /**
- * Formata um número genérico
- * @param value - Número a ser formatado
+ * Formata um valor monetário em Real brasileiro (atalho para formatCurrency)
+ * @param value - Valor a ser formatado
  * @param decimals - Número de casas decimais (padrão: 2)
- * @returns Número formatado
+ * @returns Valor formatado R$ x.xxx,xx
  */
 export function formatNumber(value: number | string, decimals: number = 2): string {
-  const numValue = typeof value === 'string' ? parseFloat(value) : value;
-  
-  if (isNaN(numValue)) return '0';
-  
-  return new Intl.NumberFormat('pt-BR', {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  }).format(numValue);
+  return formatCurrency(value, decimals);
 }
 
 /**
