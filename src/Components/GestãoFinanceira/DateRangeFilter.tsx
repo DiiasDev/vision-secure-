@@ -17,6 +17,12 @@ export default function DateRangeFilter({ onDateRangeChange }: DateRangeFilterPr
   const [endDate, setEndDate] = useState<Dayjs | null>(dayjs());
   const [selectedPreset, setSelectedPreset] = useState<string>('1mes');
 
+  const emitChange = (start: Dayjs | null, end: Dayjs | null) => {
+    if (onDateRangeChange && start && end) {
+      onDateRangeChange(start, end);
+    }
+  };
+
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -40,16 +46,7 @@ export default function DateRangeFilter({ onDateRangeChange }: DateRangeFilterPr
     setStartDate(start);
     setEndDate(end);
     setSelectedPreset(preset.value);
-    if (onDateRangeChange) {
-      onDateRangeChange(start, end);
-    }
-  };
-
-  const handleManualDateChange = () => {
-    setSelectedPreset('custom');
-    if (onDateRangeChange && startDate && endDate) {
-      onDateRangeChange(startDate, endDate);
-    }
+    emitChange(start, end);
   };
 
   const handleClearDates = () => {
@@ -229,7 +226,8 @@ export default function DateRangeFilter({ onDateRangeChange }: DateRangeFilterPr
                   value={startDate}
                   onChange={(newValue) => {
                     setStartDate(newValue);
-                    handleManualDateChange();
+                    setSelectedPreset('custom');
+                    emitChange(newValue, endDate);
                   }}
                   format="DD/MM/YYYY"
                   slotProps={{
@@ -263,7 +261,8 @@ export default function DateRangeFilter({ onDateRangeChange }: DateRangeFilterPr
                   value={endDate}
                   onChange={(newValue) => {
                     setEndDate(newValue);
-                    handleManualDateChange();
+                    setSelectedPreset('custom');
+                    emitChange(startDate, newValue);
                   }}
                   format="DD/MM/YYYY"
                   minDate={startDate || undefined}

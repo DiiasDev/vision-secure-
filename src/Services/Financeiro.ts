@@ -30,6 +30,18 @@ export class Financeiro {
     }));
   }
 
+  async getVendasPorCategoria(startDate?: string, endDate?: string){
+    const params: any = {}
+    if(startDate) params.start_date = startDate 
+    if(endDate) params.end_date = endDate; 
+    const response = await frappe.get(
+      "/method/vision_secure.seguros.doctype.seguros.seguros.vendas_por_categoria",
+      {params}
+    );
+    const {dados} = response.data.message || {};
+    return dados 
+  }
+
   async getTotalVendas(): Promise<number> {
     const seguros = await getSeguros();
     return seguros.length;

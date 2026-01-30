@@ -62,7 +62,6 @@ export default function EvolucaoVendasGrafico({
   const [infoOpen, setInfoOpen] = useState(false);
   const [data, setData] = useState<VendaData[]>([]);
   const [allData, setAllData] = useState<VendaData[]>([]);
-  // Inicializa do primeiro dia do ano até hoje
   const [dateRange, setDateRange] = useState<{start: Dayjs|null, end: Dayjs|null}>(() => {
     const today = dayjs();
     const firstDayOfYear = dayjs().startOf('year');
@@ -82,20 +81,17 @@ export default function EvolucaoVendasGrafico({
       });
   }, [dateRange]);
 
-  // Filtra os meses do período selecionado
   useEffect(() => {
     if (!dateRange.start || !dateRange.end) {
       setData([]);
       return;
     }
-    // Gera a lista de meses do range, do mais antigo ao mais recente, formato MM/YYYY
     const meses = [];
     let d = dateRange.start.startOf('month');
     while (d.isSameOrBefore(dateRange.end, 'month')) {
       meses.push(d.format('MM/YYYY'));
       d = d.add(1, 'month');
     }
-    // Monta o array de dados do gráfico na ordem dos meses do range
     const dataFiltrada = meses.map(mes => {
       const found = allData.find(item => item.mes === mes);
       return found || {
