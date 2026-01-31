@@ -1,3 +1,4 @@
+import Configuracoes from "./Pages/Configuracoes";
 import { useState, useEffect } from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import "./App.css";
@@ -127,6 +128,9 @@ function App() {
                     <Route path="/financeiro" element={<Navigate to="/financeiro/acerto" replace />} />
                     <Route path="/financeiro/acerto" element={<Acerto />} />
                     <Route path="/financeiro/gestao" element={<Financeiro />} />
+
+                    {/* Configurações */}
+                    <Route path="/configuracoes" element={<Configuracoes />} />
                     
                     {/* 404 - Not Found */}
                     <Route path="*" element={<NotFound />} />

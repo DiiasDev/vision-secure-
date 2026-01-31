@@ -49,8 +49,6 @@ export default function Financeiro() {
         >
           <Tab label="Dashboard Financeiro" />
           <Tab label="Acerto" />
-          <Tab label="Backup" />
-          <Tab label="Metas" />
           <Tab label="Relatórios" />
         </Tabs>
       </Box>
@@ -59,8 +57,6 @@ export default function Financeiro() {
       <Box>
         {activeTab === 0 && <GestaoFinanceira />}
         {activeTab === 1 && <Acerto />}
-        {activeTab === 2 && <Backup />}
-        {activeTab === 3 && <GestaoMetas />}
         {activeTab === 4 && <Relatorios />}
       </Box>
     </Box>

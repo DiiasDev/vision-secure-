@@ -158,13 +158,11 @@ export default function GestaoMetas() {
 
   return (
     <Box
-      className="p-6 min-h-screen"
-      sx={{
-        backgroundColor: 'var(--bg-app)'
-      }}
+      className="p-6 min-h-screen w-full"
+      sx={{ backgroundColor: 'var(--bg-app)' }}
     >
       {/* Header */}
-      <Box className="mb-8">
+      <Box className="mb-8 w-full">
         <Box className="flex items-center justify-between mb-4">
           <Box>
             <Typography
@@ -204,7 +202,7 @@ export default function GestaoMetas() {
       </Box>
 
       {/* Estatísticas */}
-      <Box className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+      <Box className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
         <Card sx={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-default)' }}>
           <CardContent>
             <Box className="flex items-center gap-2 mb-2">
@@ -262,7 +260,7 @@ export default function GestaoMetas() {
       </Box>
 
       {/* Tabela de Metas */}
-      <Card sx={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-default)' }}>
+      <Card sx={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-default)', width: '100%' }}>
         <CardContent>
           <Typography variant="h6" sx={{ color: 'var(--text-primary)', fontWeight: 600, mb: 3 }}>
             Metas Cadastradas

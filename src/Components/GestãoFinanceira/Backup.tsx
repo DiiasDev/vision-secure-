@@ -211,11 +211,11 @@ export default function Backup() {
 
   return (
     <Box
-      className="p-6 min-h-screen"
+      className="p-6 min-h-screen w-full flex flex-col items-center"
       sx={{ backgroundColor: 'var(--bg-app)' }}
     >
       {/* Header */}
-      <Box className="mb-6">
+      <Box className="mb-6 w-full max-w-7xl">
         <Typography
           variant="h4"
           sx={{
@@ -235,7 +235,7 @@ export default function Backup() {
       </Box>
 
       {/* Cards de Status */}
-      <Box className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+      <Box className="w-full max-w-7xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <Card sx={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-default)' }}>
           <CardContent>
             <Box className="flex items-center justify-between mb-2">
@@ -339,9 +339,9 @@ export default function Backup() {
       )}
 
       {/* Seção de Backup */}
-      <Card sx={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-default)', mb: 4 }}>
+      <Card sx={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-default)', mb: 4, width: '100%', maxWidth: '112rem' }}>
         <CardContent>
-          <Box className="flex items-center justify-between mb-4">
+          <Box className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-4">
             <Box>
               <Typography variant="h6" sx={{ color: 'var(--text-primary)', fontWeight: 600, mb: 1 }}>
                 Backup Completo do Sistema
@@ -436,9 +436,9 @@ export default function Backup() {
       </Card>
 
       {/* Seção de Planilhas de Acerto */}
-      <Card sx={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-default)' }}>
+      <Card sx={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-default)', width: '100%', maxWidth: '112rem' }}>
         <CardContent>
-          <Box className="flex items-center justify-between mb-4 flex-wrap gap-3">
+          <Box className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-4 flex-wrap">
             <Box>
               <Typography variant="h6" sx={{ color: 'var(--text-primary)', fontWeight: 600, mb: 1 }}>
                 Planilhas de Acerto Geradas

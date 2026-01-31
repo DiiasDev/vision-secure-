@@ -293,9 +293,14 @@ export default function Header({
             },
           }}
         >
-          <MenuItem onClick={closeMenu}>
+          <MenuItem
+            onClick={() => {
+              closeMenu();
+              navigate("/configuracoes");
+            }}
+          >
             <PersonOutlineIcon fontSize="small" className="mr-2" />
-            Meu perfil
+            Configurações
           </MenuItem>
 
           <MenuItem
