@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, Typography, Box, Avatar, LinearProgress, Chip, ToggleButton, ToggleButtonGroup, IconButton } from '@mui/material';
 import { EmojiEvents, TrendingUp, TrendingDown, ViewList, BarChart as BarChartIcon, ShowChart, InfoOutlined } from '@mui/icons-material';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import InfoModal from '../InfoModal';
-
+import { Financeiro } from '../../../Services/Financeiro';
+import DateRangeFilter from '../DateRangeFilter';
+import dayjs, { Dayjs } from 'dayjs';
 interface Corretor {
   id: number;
   nome: string;
@@ -204,18 +206,56 @@ const CustomTooltip = ({ active, payload }: any) => {
 };
 
 export default function RankingCorretoresGrafico({ 
-  data, 
   loading = false, 
   error 
 }: RankingCorretoresGraficoProps) {
   const [viewMode, setViewMode] = useState<'list' | 'bar' | 'line'>('list');
   const [infoOpen, setInfoOpen] = useState(false);
-
+  const [data, setData] = useState<Corretor[]>([]);
+  const [dateRange, setDateRange] = useState<{ start: Dayjs | null; end: Dayjs | null }>(() => {
+    const today = dayjs();
+    const start = dayjs().subtract(30, 'days');
+    return { start, end: today };
+  });
   const handleViewChange = (_: React.MouseEvent<HTMLElement>, newView: 'list' | 'bar' | 'line' | null) => {
     if (newView !== null) {
       setViewMode(newView);
     }
   };
+
+  useEffect(() => {
+    if (!dateRange.start || !dateRange.end) {
+      setData([]);
+      return;
+    }
+    const financeiro = new Financeiro();
+    const start = dateRange.start.format('YYYY-MM-DD');
+    const end = dateRange.end.format('YYYY-MM-DD');
+    financeiro.getRankingDeCorretores(start, end).then((dados) => {
+      if (Array.isArray(dados)) {
+        // O backend retorna [{ corretor, valor }]
+        // Adiciona campos fictícios para meta, crescimento, posicao e avatar
+        const dataCompletada = dados.map((item: any, idx: number) => {
+          // Gera meta fictícia (exemplo: 90% a 120% do valor)
+          const meta = Math.round((item.valor || 0) * (0.9 + 0.3 * Math.random()));
+          // Gera crescimento fictício (-10% a +30%)
+          const crescimento = Math.round(-10 + Math.random() * 40);
+          // Avatar: primeira letra do nome
+          const avatar = (item.corretor || '?').charAt(0).toUpperCase();
+          return {
+            id: idx + 1,
+            nome: item.corretor || 'Sem Nome',
+            vendas: item.valor || 0,
+            meta,
+            crescimento,
+            posicao: idx + 1,
+            avatar,
+          };
+        });
+        setData(dataCompletada);
+      }
+    });
+  }, [dateRange]);
 
   const chartData = data.map(c => ({
     nome: c.nome.split(' ')[0],
@@ -267,6 +307,9 @@ export default function RankingCorretoresGrafico({
         }}
       >
         <CardContent>
+          <Box className="flex flex-wrap gap-3 mb-4 items-center">
+            <DateRangeFilter onDateRangeChange={(start, end) => setDateRange({ start, end })} />
+          </Box>
           <Box className="flex items-center justify-between mb-4 flex-wrap gap-3">
             <Box className="flex items-center gap-2">
               <Box>

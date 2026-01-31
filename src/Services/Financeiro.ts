@@ -19,7 +19,7 @@ export class Financeiro {
     if (endDate) params.end_date = endDate;
     const response = await frappe.get(
       "/method/vision_secure.seguros.doctype.seguros.seguros.data_evolucao_vendas",
-      { params }
+      { params },
     );
     const { dados } = response.data.message || {};
     return dados.map((item: any) => ({
@@ -30,16 +30,32 @@ export class Financeiro {
     }));
   }
 
-  async getVendasPorCategoria(startDate?: string, endDate?: string){
-    const params: any = {}
-    if(startDate) params.start_date = startDate 
-    if(endDate) params.end_date = endDate; 
+  async getVendasPorCategoria(startDate?: string, endDate?: string) {
+    const params: any = {};
+    if (startDate) params.start_date = startDate;
+    if (endDate) params.end_date = endDate;
     const response = await frappe.get(
       "/method/vision_secure.seguros.doctype.seguros.seguros.vendas_por_categoria",
-      {params}
+      { params },
     );
-    const {dados} = response.data.message || {};
-    return dados 
+    const { dados } = response.data.message || {};
+    return dados;
+  }
+
+  async getRankingDeCorretores(startDate?: string, endDate?: string) {
+    try {
+      const params: any = {};
+      if (startDate) params.start_date = startDate;
+      if (endDate) params.end_date = endDate;
+      const response = await frappe.get(
+        "/method/vision_secure.seguros.doctype.seguros.seguros.ranking_de_corretores",
+        { params },
+      );
+      const { dados } = response.data.message || {};
+      return dados;
+    } catch (error: any) {
+      console.error("Erro ao fazer o get da função de ranking de corretores");
+    }
   }
 
   async getVendasPorCategoriaCorretor(startDate?: string, endDate?: string) {
@@ -48,7 +64,7 @@ export class Financeiro {
     if (endDate) params.end_date = endDate;
     const response = await frappe.get(
       "/method/vision_secure.seguros.doctype.seguros.seguros.vendas_por_categoria_corretor",
-      { params }
+      { params },
     );
     const { dados } = response.data.message || {};
     return dados;
