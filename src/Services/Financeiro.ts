@@ -2,6 +2,14 @@ import { getSeguros } from "./Seguros";
 import { getCorretor } from "./corretores";
 import { frappe } from "./frappeClient";
 
+export interface PlanilhaAcertoResumo {
+  id: number;
+  nomeArquivo: string;
+  dataCriacao: string;
+  total_comissoes: number;
+  planilhaUrl: string;
+}
+
 export class Financeiro {
   constructor() {}
 
@@ -105,5 +113,45 @@ export class Financeiro {
       console.error("Erro ao buscar corretores:", error);
       return 0;
     }
+  }
+
+  async getPlanilhasAcertoFixas(): Promise<PlanilhaAcertoResumo[]> {
+    return [
+      {
+        id: 1,
+        nomeArquivo: "Acerto_Janeiro_2026.xlsx",
+        dataCriacao: "25/01/2026 14:30",
+        total_comissoes: 125430.5,
+        planilhaUrl: "/files/Acerto_Janeiro_2026.xlsx",
+      },
+      {
+        id: 2,
+        nomeArquivo: "Acerto_Dezembro_2025.xlsx",
+        dataCriacao: "26/12/2025 16:45",
+        total_comissoes: 132980.25,
+        planilhaUrl: "/files/Acerto_Dezembro_2025.xlsx",
+      },
+      {
+        id: 3,
+        nomeArquivo: "Acerto_Novembro_2025.xlsx",
+        dataCriacao: "24/11/2025 10:20",
+        total_comissoes: 118742.1,
+        planilhaUrl: "/files/Acerto_Novembro_2025.xlsx",
+      },
+      {
+        id: 4,
+        nomeArquivo: "Acerto_Outubro_2025.xlsx",
+        dataCriacao: "23/10/2025 15:10",
+        total_comissoes: 109380.9,
+        planilhaUrl: "/files/Acerto_Outubro_2025.xlsx",
+      },
+      {
+        id: 5,
+        nomeArquivo: "Acerto_Setembro_2025.xlsx",
+        dataCriacao: "22/09/2025 11:30",
+        total_comissoes: 102540.35,
+        planilhaUrl: "/files/Acerto_Setembro_2025.xlsx",
+      },
+    ];
   }
 }
