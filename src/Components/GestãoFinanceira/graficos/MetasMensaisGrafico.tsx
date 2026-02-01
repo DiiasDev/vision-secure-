@@ -8,6 +8,7 @@ interface Meta {
   meta: number;
   realizado: number;
   status: 'atingida' | 'nao-atingida' | 'em-andamento';
+  ano: number;
 }
 
 interface MetasMensaisGraficoProps {
@@ -15,6 +16,36 @@ interface MetasMensaisGraficoProps {
   loading?: boolean;
   error?: string;
 }
+
+const MESES = [
+  "Janeiro",
+  "Fevereiro",
+  "Março",
+  "Abril",
+  "Maio",
+  "Junho",
+  "Julho",
+  "Agosto",
+  "Setembro",
+  "Outubro",
+  "Novembro",
+  "Dezembro",
+];
+
+const getStatus = (meta: Meta) => {
+  const hoje = new Date();
+  const mesIndex = MESES.findIndex((m) => m === meta.mes);
+  const isFuturo =
+    mesIndex === -1
+      ? false
+      : meta.ano > hoje.getFullYear() ||
+        (meta.ano === hoje.getFullYear() && mesIndex > hoje.getMonth());
+  if (meta.meta > 0 && meta.realizado >= meta.meta) return "atingida" as const;
+  if (meta.meta === 0 && meta.realizado > 0) return "atingida" as const;
+  if (isFuturo) return "em-andamento" as const;
+  if (meta.meta > 0) return "nao-atingida" as const;
+  return "em-andamento" as const;
+};
 
 const getStatusIcon = (status: Meta['status']) => {
   switch (status) {
@@ -39,6 +70,7 @@ const getStatusColor = (status: Meta['status']) => {
 };
 
 const MetaCard = ({ meta }: { meta: Meta }) => {
+  const status = getStatus(meta);
   const percentual = meta.meta > 0 ? (meta.realizado / meta.meta) * 100 : 0;
   const diferenca = meta.realizado - meta.meta;
   const isPositivo = diferenca >= 0;
@@ -58,7 +90,7 @@ const MetaCard = ({ meta }: { meta: Meta }) => {
     >
       <Box className="flex items-center justify-between mb-3">
         <Box className="flex items-center gap-2">
-          {getStatusIcon(meta.status)}
+          {getStatusIcon(status)}
           <Typography 
             variant="subtitle2" 
             sx={{ 
@@ -70,7 +102,7 @@ const MetaCard = ({ meta }: { meta: Meta }) => {
           </Typography>
         </Box>
         
-        {meta.status !== 'em-andamento' && (
+        {status !== 'em-andamento' && (
           <Typography 
             variant="caption" 
             sx={{ 
@@ -101,7 +133,7 @@ const MetaCard = ({ meta }: { meta: Meta }) => {
             borderRadius: 3,
             backgroundColor: 'var(--bg-tertiary)',
             '& .MuiLinearProgress-bar': {
-              backgroundColor: getStatusColor(meta.status),
+              backgroundColor: getStatusColor(status),
               borderRadius: 3
             }
           }}
@@ -115,7 +147,7 @@ const MetaCard = ({ meta }: { meta: Meta }) => {
           fontSize: '0.75rem'
         }}
       >
-        {percentual.toFixed(1)}% da meta {meta.status === 'em-andamento' ? '(em andamento)' : ''}
+        {percentual.toFixed(1)}% da meta {status === 'em-andamento' ? '(em andamento)' : ''}
       </Typography>
     </Box>
   );
@@ -128,8 +160,8 @@ export default function MetasMensaisGrafico({
 }: MetasMensaisGraficoProps) {
   const [infoOpen, setInfoOpen] = useState(false);
   
-  const metasAtingidas = data.filter(m => m.status === 'atingida').length;
-  const totalMeses = data.filter(m => m.status !== 'em-andamento').length;
+  const metasAtingidas = data.filter((m) => getStatus(m) === 'atingida').length;
+  const totalMeses = data.length;
   const taxaSucesso = totalMeses > 0 ? ((metasAtingidas / totalMeses) * 100).toFixed(1) : '0.0';
 
   if (error) {

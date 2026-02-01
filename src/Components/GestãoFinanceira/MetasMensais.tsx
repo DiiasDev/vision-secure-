@@ -7,6 +7,7 @@ interface MetaGrafico {
   meta: number;
   realizado: number;
   status: "atingida" | "nao-atingida" | "em-andamento";
+  ano: number;
 }
 
 export default function MetasMensais() {

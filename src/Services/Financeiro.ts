@@ -172,17 +172,21 @@ const calcularRealizadoMeta = (meta: MetaApi, seguros: any[]) => {
   const tipoMeta = meta.tipo_meta || "Mensal";
   const metaMonth = monthNameToNumber(meta.mes);
   return seguros.reduce((acc, seguro) => {
-    const data = getSeguroDate(seguro);
-    if (!data) return acc;
+    const range = getSeguroRange(seguro);
+    if (!range) return acc;
     if (!matchCorretor(meta.corretor, seguro)) return acc;
     if (!matchCategoria(meta.categoria, seguro.tipo_seguro)) return acc;
-    const ano = data.getFullYear();
-    if (ano !== Number(meta.ano)) return acc;
+    const ano = Number(meta.ano);
     if (tipoMeta === "Mensal") {
       if (!metaMonth) return acc;
-      const mes = data.getMonth() + 1;
-      if (mes !== metaMonth) return acc;
+      const monthStart = new Date(ano, metaMonth - 1, 1);
+      const monthEnd = new Date(ano, metaMonth, 0);
+      if (range.inicio > monthEnd || range.fim < monthStart) return acc;
+      return acc + (Number(seguro.valor_do_seguro) || 0);
     }
+    const yearStart = new Date(ano, 0, 1);
+    const yearEnd = new Date(ano, 11, 31);
+    if (range.inicio > yearEnd || range.fim < yearStart) return acc;
     return acc + (Number(seguro.valor_do_seguro) || 0);
   }, 0);
 };
@@ -399,11 +403,12 @@ export class Financeiro {
       const metaTotal = metasCorretora
         .filter((meta) => meta.ano === alvoAno && meta.mes === mes)
         .reduce((acc, meta) => acc + Number(meta.valor_meta || 0), 0);
+      const monthStart = new Date(alvoAno, index, 1);
+      const monthEnd = new Date(alvoAno, index + 1, 0);
       const realizado = seguros.reduce((acc, seguro) => {
-        const data = getSeguroDate(seguro);
-        if (!data) return acc;
-        if (data.getFullYear() !== alvoAno) return acc;
-        if (data.getMonth() !== index) return acc;
+        const range = getSeguroRange(seguro);
+        if (!range) return acc;
+        if (range.inicio > monthEnd || range.fim < monthStart) return acc;
         return acc + (Number(seguro.valor_do_seguro) || 0);
       }, 0);
       const hoje = new Date();
@@ -415,7 +420,7 @@ export class Financeiro {
         : realizado >= metaTotal && metaTotal > 0
           ? "atingida"
           : "nao-atingida";
-      return { mes, meta: metaTotal, realizado, status };
+      return { mes, meta: metaTotal, realizado, status, ano: alvoAno };
     });
   }
 
