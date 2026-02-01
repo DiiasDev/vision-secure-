@@ -10,6 +10,7 @@ import DateRangeFilter from '../DateRangeFilter';
 // import CorretorFilter from '../CorretorFilter';
 import dayjs, { Dayjs } from 'dayjs';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
+import { getMetasMensaisCorretora } from '../../../Services/metas';
 dayjs.extend(isSameOrBefore);
 
 interface VendaData {
@@ -74,11 +75,17 @@ export default function EvolucaoVendasGrafico({
     const financeiro = new Financeiro();
     const start = dateRange.start ? dateRange.start.format('YYYY-MM-DD') : undefined;
     const end = dateRange.end ? dateRange.end.format('YYYY-MM-DD') : undefined;
-    financeiro.getEvolucaovendas(start, end)
-      .then((dados) => {
-        console.log('[EvolucaoVendasGrafico] Dados recebidos do backend:', dados);
-        setAllData(dados);
-      });
+    Promise.all([
+      financeiro.getEvolucaovendas(start, end),
+      getMetasMensaisCorretora(start, end),
+    ]).then(([dados, metasMap]) => {
+      const dadosComMeta = (dados || []).map((item: any) => ({
+        ...item,
+        meta: metasMap[item.mes] ?? 0,
+      }));
+      console.log('[EvolucaoVendasGrafico] Dados recebidos do backend:', dadosComMeta);
+      setAllData(dadosComMeta);
+    });
   }, [dateRange]);
 
   useEffect(() => {

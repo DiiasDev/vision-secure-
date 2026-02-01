@@ -111,10 +111,9 @@ export default function VendasPorCategoriaGrafico() {
     const start = dateRange.start ? dateRange.start.format("YYYY-MM-DD") : undefined;
     const end = dateRange.end ? dateRange.end.format("YYYY-MM-DD") : undefined;
     financeiro.getVendasPorCategoria(start, end).then((dados) => {
-      // Mapeia para o formato esperado pelo gráfico
       const mapped = (dados || []).map((item: any) => ({
         ...item,
-        color: CATEGORIA_CORES[item.categoria] || '#8884d8',
+        color: CATEGORIA_CORES[item.categoria] || "#8884d8",
       }));
       setData(mapped);
     });

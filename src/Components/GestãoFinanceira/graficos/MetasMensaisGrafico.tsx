@@ -39,7 +39,7 @@ const getStatusColor = (status: Meta['status']) => {
 };
 
 const MetaCard = ({ meta }: { meta: Meta }) => {
-  const percentual = (meta.realizado / meta.meta) * 100;
+  const percentual = meta.meta > 0 ? (meta.realizado / meta.meta) * 100 : 0;
   const diferenca = meta.realizado - meta.meta;
   const isPositivo = diferenca >= 0;
 

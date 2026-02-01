@@ -231,21 +231,16 @@ export default function RankingCorretoresGrafico({
     const financeiro = new Financeiro();
     const start = dateRange.start.format('YYYY-MM-DD');
     const end = dateRange.end.format('YYYY-MM-DD');
-    financeiro.getRankingDeCorretores(start, end).then((dados) => {
+    financeiro.getMetasPorCorretorRanking(start, end).then((dados) => {
       if (Array.isArray(dados)) {
-        // O backend retorna [{ corretor, valor }]
-        // Adiciona campos fictícios para meta, crescimento, posicao e avatar
         const dataCompletada = dados.map((item: any, idx: number) => {
-          // Gera meta fictícia (exemplo: 90% a 120% do valor)
-          const meta = Math.round((item.valor || 0) * (0.9 + 0.3 * Math.random()));
-          // Gera crescimento fictício (-10% a +30%)
-          const crescimento = Math.round(-10 + Math.random() * 40);
-          // Avatar: primeira letra do nome
-          const avatar = (item.corretor || '?').charAt(0).toUpperCase();
+          const meta = item.meta || 0;
+          const crescimento = 0;
+          const avatar = (item.nome || '?').charAt(0).toUpperCase();
           return {
-            id: idx + 1,
-            nome: item.corretor || 'Sem Nome',
-            vendas: item.valor || 0,
+            id: item.id ?? idx + 1,
+            nome: item.nome || 'Sem Nome',
+            vendas: item.vendas || 0,
             meta,
             crescimento,
             posicao: idx + 1,
