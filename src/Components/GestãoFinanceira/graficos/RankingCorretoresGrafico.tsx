@@ -32,9 +32,19 @@ const getMedalColor = (posicao: number) => {
 };
 
 const CorretorCard = ({ corretor }: { corretor: Corretor }) => {
-  const percentualMeta = (corretor.vendas / corretor.meta) * 100;
-  const isPositivo = corretor.crescimento >= 0;
-  const atingiuMeta = percentualMeta >= 100;
+  const percentualMeta =
+    corretor.meta > 0 ? (corretor.vendas / corretor.meta) * 100 : 0;
+  const isPositivo = corretor.crescimento > 0;
+  const isNegativo = corretor.crescimento < 0;
+  const crescimentoLabel = isPositivo
+    ? `+${corretor.crescimento}%`
+    : `${corretor.crescimento}%`;
+  const crescimentoColor = isPositivo
+    ? "var(--color-success)"
+    : isNegativo
+      ? "var(--color-danger)"
+      : "var(--text-secondary)";
+  const atingiuMeta = corretor.meta > 0 && percentualMeta >= 100;
 
   return (
     <Box 
@@ -113,23 +123,30 @@ const CorretorCard = ({ corretor }: { corretor: Corretor }) => {
 
         <Box className="text-right">
           <Box className="flex items-center gap-1 justify-end mb-1">
-            {isPositivo ? (
+            {isPositivo && (
               <TrendingUp sx={{ fontSize: 18, color: 'var(--color-success)' }} />
-            ) : (
+            )}
+            {isNegativo && (
               <TrendingDown sx={{ fontSize: 18, color: 'var(--color-danger)' }} />
             )}
             <Typography 
               variant="body2" 
               sx={{ 
-                color: isPositivo ? 'var(--color-success)' : 'var(--color-danger)',
+                color: crescimentoColor,
                 fontWeight: 600
               }}
             >
-              {isPositivo ? '+' : ''}{corretor.crescimento}%
+              {crescimentoLabel}
             </Typography>
           </Box>
           <Chip 
-            label={atingiuMeta ? 'Meta Atingida' : `${percentualMeta.toFixed(0)}% da meta`}
+            label={
+              corretor.meta > 0
+                ? atingiuMeta
+                  ? 'Meta Atingida'
+                  : `${percentualMeta.toFixed(0)}% da meta`
+                : 'Sem meta'
+            }
             size="small"
             sx={{
               height: 22,
@@ -235,7 +252,7 @@ export default function RankingCorretoresGrafico({
       if (Array.isArray(dados)) {
         const dataCompletada = dados.map((item: any, idx: number) => {
           const meta = item.meta || 0;
-          const crescimento = 0;
+          const crescimento = Number(item.crescimento || 0);
           const avatar = (item.nome || '?').charAt(0).toUpperCase();
           return {
             id: item.id ?? idx + 1,

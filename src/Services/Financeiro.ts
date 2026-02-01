@@ -102,6 +102,30 @@ const buildMonthRange = (startDate: string, endDate: string) => {
   return months;
 };
 
+const parseDateOnly = (dateStr: string) => {
+  const [yyyy, mm, dd] = dateStr.split("-").map(Number);
+  if (!yyyy || !mm || !dd) return null;
+  return new Date(yyyy, mm - 1, dd);
+};
+
+const formatDate = (date: Date) => {
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+const buildPreviousRange = (startDate: string, endDate: string) => {
+  const start = parseDateOnly(startDate);
+  const end = parseDateOnly(endDate);
+  if (!start || !end) return null;
+  const diffMs = end.getTime() - start.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
+  const prevEnd = new Date(start.getFullYear(), start.getMonth(), start.getDate() - 1);
+  const prevStart = new Date(prevEnd.getFullYear(), prevEnd.getMonth(), prevEnd.getDate() - (diffDays - 1));
+  return { start: formatDate(prevStart), end: formatDate(prevEnd) };
+};
+
 const getSeguroRange = (seguro: any) => {
   const inicio = parseDateFlexible(seguro?.inicio_vigencia || "") || parseDateFlexible(seguro?.creation || "");
   const fim = parseDateFlexible(seguro?.fim_vigencia || "") || inicio;
@@ -420,6 +444,22 @@ export class Financeiro {
       this.getRankingDeCorretores(startDate, endDate),
       getMetas(),
     ]);
+    let rankingAnterior: any[] = [];
+    if (startDate && endDate) {
+      const prevRange = buildPreviousRange(startDate, endDate);
+      if (prevRange) {
+        const dadosAnterior = await this.getRankingDeCorretores(
+          prevRange.start,
+          prevRange.end,
+        );
+        rankingAnterior = Array.isArray(dadosAnterior) ? dadosAnterior : [];
+      }
+    }
+    const rankingAnteriorMap = new Map<string, number>();
+    rankingAnterior.forEach((item: any) => {
+      const nome = item.corretor || "Sem Nome";
+      rankingAnteriorMap.set(nome, Number(item.valor) || 0);
+    });
     const metasMensais = metas.filter(
       (meta) =>
         (meta.tipo_meta || "Mensal") === "Mensal" &&
@@ -434,11 +474,18 @@ export class Financeiro {
     return (ranking || []).map((item: any, idx: number) => {
       const nome = item.corretor || "Sem Nome";
       const meta = agregadas.get(nome) || 0;
+      const vendasAtual = Number(item.valor) || 0;
+      const vendasAnterior = rankingAnteriorMap.get(nome) || 0;
+      const crescimento =
+        vendasAnterior > 0
+          ? Number(((vendasAtual - vendasAnterior) / vendasAnterior) * 100).toFixed(1)
+          : 0;
       return {
         id: idx + 1,
         nome,
-        vendas: item.valor || 0,
+        vendas: vendasAtual,
         meta,
+        crescimento: Number(crescimento),
       };
     });
   }
